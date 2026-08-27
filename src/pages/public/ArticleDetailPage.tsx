@@ -123,9 +123,20 @@ export const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({ slug, navi
             </div>
           )}
 
-          {/* Render Rich Content Blocks */}
-          <div className="font-sans">
-            <ContentBlockRenderer blocks={article.contentBlocks} />
+          {/* Render Rich Content (HTML from WYSIWYG or Legacy Blocks) */}
+          <div className="font-sans text-[#222] text-base leading-relaxed">
+            {article.contentHtml ? (
+              <div 
+                className="prose prose-neutral max-w-none space-y-4 leading-relaxed font-sans"
+                dangerouslySetInnerHTML={{
+                  __html: typeof article.contentHtml === 'object'
+                    ? ((article.contentHtml as any)[lang] || (article.contentHtml as any).vi || '')
+                    : article.contentHtml
+                }}
+              />
+            ) : (
+              <ContentBlockRenderer blocks={article.contentBlocks} />
+            )}
           </div>
 
           {/* Tags */}

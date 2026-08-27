@@ -116,7 +116,8 @@ export interface Article {
   publishedAt?: string;
   featured?: boolean;
   published: boolean;
-  contentBlocks: ContentBlock[];
+  contentHtml?: BilingualText | string;
+  contentBlocks?: ContentBlock[];
   seo?: SeoMetadata;
   sortOrder?: number;
   createdAt?: string;

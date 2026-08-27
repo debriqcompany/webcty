@@ -17,6 +17,87 @@ import {
   TechnicalBasementMethod 
 } from '../../utils/visuals';
 
+// Typewriter Effect Component for Hero Title
+const TypewriterHeroTitle: React.FC<{ lang: 'vi' | 'en' }> = ({ lang }) => {
+  const line1 = lang === 'vi' ? 'Kỹ thuật' : 'Engineering';
+  const line2 = lang === 'vi' ? 'phía sau' : 'behind';
+  const line3 = lang === 'vi' ? 'công trình' : 'the build';
+
+  const fullText = `${line1}\n${line2}\n${line3}`;
+  const [displayedCount, setDisplayedCount] = React.useState(0);
+
+  React.useEffect(() => {
+    setDisplayedCount(0);
+    let index = 0;
+    const interval = setInterval(() => {
+      index++;
+      setDisplayedCount(index);
+      if (index >= fullText.length) {
+        clearInterval(interval);
+      }
+    }, 45);
+    return () => clearInterval(interval);
+  }, [lang, fullText]);
+
+  // Split displayed text into lines
+  const currentStr = fullText.slice(0, displayedCount);
+  const parts = currentStr.split('\n');
+  const curLine1 = parts[0] || '';
+  const curLine2 = parts[1] || '';
+  const curLine3 = parts[2] || '';
+  const isTypingLine3 = displayedCount > (line1.length + line2.length + 1);
+
+  return (
+    <h1 className="type-display-hero text-4xl sm:text-6xl lg:text-[72px] xl:text-[78px] mb-6 sm:mb-8 text-[#151515] max-w-xl font-bold font-display leading-[1.05] tracking-tight">
+      <span className="block min-h-[1.1em]">
+        {curLine1}
+        {displayedCount <= line1.length && <span className="text-[#F27D26] animate-pulse">|</span>}
+      </span>
+      {displayedCount > line1.length && (
+        <span className="block min-h-[1.1em]">
+          {curLine2}
+          {displayedCount > line1.length && !isTypingLine3 && <span className="text-[#F27D26] animate-pulse">|</span>}
+        </span>
+      )}
+      {isTypingLine3 && (
+        <span className="block min-h-[1.1em] text-[#F27D26]">
+          {curLine3}
+          <span className="text-[#F27D26] animate-pulse">|</span>
+        </span>
+      )}
+    </h1>
+  );
+};
+
+// Animated Stat Counter Component
+const AnimatedStatCounter: React.FC<{ target: number; suffix?: string; delay?: number }> = ({
+  target,
+  suffix = '',
+  delay = 800
+}) => {
+  const [count, setCount] = React.useState(1);
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      let current = 1;
+      const stepTime = Math.max(35, Math.floor(900 / target));
+      const interval = setInterval(() => {
+        current++;
+        setCount(current);
+        if (current >= target) {
+          clearInterval(interval);
+        }
+      }, stepTime);
+    }, delay);
+
+    return () => clearTimeout(timer);
+  }, [target, delay]);
+
+  return (
+    <span>{count}{suffix}</span>
+  );
+};
+
 interface HomePageProps {
   navigate: (path: string) => void;
   openQuoteModal: (service?: string, project?: string) => void;
@@ -45,21 +126,8 @@ export const HomePage: React.FC<HomePageProps> = ({ navigate, openQuoteModal }) 
                 {lang === 'vi' ? 'HỒ SƠ NĂNG LỰC KỸ THUẬT' : 'TECHNICAL PARTNER'}
               </div>
               
-              <h1 className="type-display-hero text-4xl sm:text-6xl lg:text-[72px] xl:text-[78px] mb-6 sm:mb-8 text-[#151515] max-w-xl font-bold font-display">
-                {lang === 'vi' ? (
-                  <>
-                    Kỹ thuật<br />
-                    phía sau<br />
-                    <span className="text-[#F27D26]">công trình</span>
-                  </>
-                ) : (
-                  <>
-                    Engineering<br />
-                    behind<br />
-                    <span className="text-[#F27D26]">the build</span>
-                  </>
-                )}
-              </h1>
+              {/* Typewriter Hero Heading */}
+              <TypewriterHeroTitle lang={lang} />
 
               <p className="type-body-lg text-base sm:text-[18px] text-[#3D3D3A] leading-[1.65] max-w-md font-sans">
                 {lang === 'vi'
@@ -86,19 +154,25 @@ export const HomePage: React.FC<HomePageProps> = ({ navigate, openQuoteModal }) 
                 </button>
               </div>
 
-              {/* Scale Metrics Bar */}
+              {/* Scale Metrics Bar with Animated Count-up Numbers */}
               <div className="grid grid-cols-3 gap-6 pt-8 border-t border-[#D9D8D3]">
                 <div>
                   <p className="type-meta-label mb-1">RESOURCES</p>
-                  <p className="text-base sm:text-lg font-semibold text-[#151515] font-sans">5+ Kỹ sư</p>
+                  <p className="text-base sm:text-lg font-semibold text-[#151515] font-sans">
+                    <AnimatedStatCounter target={5} suffix="+ Kỹ sư" delay={800} />
+                  </p>
                 </div>
                 <div>
                   <p className="type-meta-label mb-1">CAPACITY</p>
-                  <p className="text-base sm:text-lg font-semibold text-[#151515] font-sans">25+ Cộng tác viên</p>
+                  <p className="text-base sm:text-lg font-semibold text-[#151515] font-sans">
+                    <AnimatedStatCounter target={25} suffix="+ Cộng tác viên" delay={900} />
+                  </p>
                 </div>
                 <div>
                   <p className="type-meta-label mb-1">LANDMARKS</p>
-                  <p className="text-base sm:text-lg font-semibold text-[#F27D26] font-sans">9+ Dự án lớn</p>
+                  <p className="text-base sm:text-lg font-semibold text-[#F27D26] font-sans">
+                    <AnimatedStatCounter target={9} suffix="+ Dự án lớn" delay={1000} />
+                  </p>
                 </div>
               </div>
             </div>

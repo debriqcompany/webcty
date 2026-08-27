@@ -15,12 +15,12 @@ import {
   Upload,
   AlertCircle,
   FileText,
-  Tag
+  Tag,
+  Image as ImageIcon
 } from 'lucide-react';
 import { Article, ContentBlock } from '../../types';
-import { RichContentEditor } from '../../components/admin/RichContentEditor';
+import { WysiwygEditor } from '../../components/admin/WysiwygEditor';
 import { MediaPickerModal } from '../../components/admin/MediaPickerModal';
-import { ArticlePreviewModal } from '../../components/admin/ArticlePreviewModal';
 
 interface AdminArticlesProps {
   articles: Article[];
@@ -34,18 +34,38 @@ export const AdminArticles: React.FC<AdminArticlesProps> = ({ articles = [], tok
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [saving, setSaving] = useState(false);
-  const [previewOpen, setPreviewOpen] = useState(false);
   const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
   const [activeLangTab, setActiveLangTab] = useState<'vi' | 'en'>('vi');
 
   const categories = [
     { id: 'all', label: 'Tất cả danh mục' },
-    { id: 'shopdrawing-standard', label: 'Tiêu chuẩn Shopdrawing' },
-    { id: 'rebar-optimization', label: 'Tối ưu hóa cốt thép' },
-    { id: 'bim-revit-coordination', label: 'BIM / Revit phối hợp' },
-    { id: 'site-qa-qc', label: 'QA/QC & Nghiệm thu' },
-    { id: 'case-study', label: 'Phân tích ca điển hình' }
+    { id: 'Kỹ thuật Shopdrawing', label: 'Kỹ thuật Shopdrawing' },
+    { id: 'Tiêu chuẩn TCVN', label: 'Tiêu chuẩn TCVN & Quốc tế' },
+    { id: 'BIM / Revit', label: 'BIM / Revit phối hợp' },
+    { id: 'Biện pháp thi công', label: 'Biện pháp thi công' },
+    { id: 'QA/QC Hiện trường', label: 'QA/QC & Nghiệm thu' }
   ];
+
+  // Helper to convert legacy contentBlocks or contentHtml to string
+  const getArticleHtml = (art: Partial<Article>, lang: 'vi' | 'en'): string => {
+    if (art.contentHtml) {
+      if (typeof art.contentHtml === 'object') {
+        return (art.contentHtml as any)[lang] || (art.contentHtml as any).vi || '';
+      }
+      return (art.contentHtml as string) || '';
+    }
+    if (art.contentBlocks && art.contentBlocks.length > 0) {
+      return art.contentBlocks.map(b => {
+        const text = typeof b.content === 'object' ? (b.content as any)[lang] : (b.content || '');
+        if (b.type === 'heading') return `<h${b.level || 2}>${text}</h${b.level || 2}>`;
+        if (b.type === 'callout') return `<div class="my-6 p-4 bg-[#1E1E22] border-l-4 border-[#F27D26] text-[#DDD] rounded-r"><strong class="text-[#F27D26] font-mono-tech text-xs uppercase block">${typeof b.title === 'object' ? (b.title as any)[lang] : (b.title || 'LƯU Ý KỸ THUẬT')}</strong><p>${text}</p></div>`;
+        if (b.type === 'image') return `<figure class="my-6"><img src="${b.src}" alt="${b.alt || ''}" class="rounded shadow-lg max-w-full" />${b.caption ? `<figcaption class="text-center text-xs text-[#888] mt-2">${typeof b.caption === 'object' ? (b.caption as any)[lang] : b.caption}</figcaption>` : ''}</figure>`;
+        if (b.type === 'quote') return `<blockquote><p>${text}</p></blockquote>`;
+        return `<p>${text}</p>`;
+      }).join('\n');
+    }
+    return '';
+  };
 
   // Helper to slugify string
   const slugify = (text: string) => {
@@ -66,41 +86,44 @@ export const AdminArticles: React.FC<AdminArticlesProps> = ({ articles = [], tok
     setCurrentArticle({
       title: { vi: '', en: '' },
       slug: '',
-      category: 'shopdrawing-standard',
+      category: 'Kỹ thuật Shopdrawing',
       excerpt: { vi: '', en: '' },
-      heroImage: '/assets/blueprint-placeholder.svg',
+      coverImage: 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&w=1200&q=80',
       author: 'Ban Kỹ Thuật DEBRIQ',
       readingTimeMinutes: 5,
       featured: false,
       published: true,
-      tags: ['Shopdrawing', 'Revit'],
-      contentBlocks: [
-        {
-          id: `blk-${Date.now()}-1`,
-          type: 'heading',
-          level: 2,
-          content: { vi: 'Tổng quan và bối cảnh kỹ thuật', en: 'Technical Background & Overview' }
-        },
-        {
-          id: `blk-${Date.now()}-2`,
-          type: 'paragraph',
-          content: {
-            vi: 'Nội dung phân tích chuyên sâu về quy trình và giải pháp triển khai bản vẽ...',
-            en: 'Detailed technical analysis on shopdrawing methodologies and workflows...'
-          }
-        }
-      ],
+      tags: ['Shopdrawing', 'Kết cấu'],
+      contentHtml: {
+        vi: '<h2>1. Đặt vấn đề và thực tiễn thi công tại công trường</h2><p>Mô tả chi tiết phân tích hồ sơ kỹ thuật, các điểm xung đột cốt thép hoặc biện pháp tổ chức thi công thực tế...</p>',
+        en: '<h2>1. Technical Background & Site Execution Overview</h2><p>Detailed analysis of shopdrawing methodologies, rebar detailing tolerances, and coordination workflows...</p>'
+      },
       seo: {
         metaTitle: '',
         metaDescription: ''
       }
     });
     setIsEditing(true);
+    setActiveLangTab('vi');
   };
 
   const handleStartEdit = (art: Article) => {
-    setCurrentArticle(JSON.parse(JSON.stringify(art)));
+    const copy = JSON.parse(JSON.stringify(art));
+    // Ensure contentHtml is populated
+    if (!copy.contentHtml) {
+      copy.contentHtml = {
+        vi: getArticleHtml(copy, 'vi'),
+        en: getArticleHtml(copy, 'en')
+      };
+    } else if (typeof copy.contentHtml === 'string') {
+      copy.contentHtml = {
+        vi: copy.contentHtml,
+        en: copy.contentHtml
+      };
+    }
+    setCurrentArticle(copy);
     setIsEditing(true);
+    setActiveLangTab('vi');
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -148,227 +171,207 @@ export const AdminArticles: React.FC<AdminArticlesProps> = ({ articles = [], tok
         headers: token ? { Authorization: `Bearer ${token}` } : {}
       });
       if (res.ok) {
-        onRefresh();
+        await onRefresh();
+        setDeletingArticleId(null);
       }
-      setDeletingArticleId(null);
     } catch (err) {
-      console.error('Lỗi xóa bài viết', err);
+      console.error('Lỗi khi xóa bài viết:', err);
     }
   };
 
-  const filteredArticles = articles.filter((art) => {
-    const matchesCategory = selectedCategory === 'all' || art.category === selectedCategory;
-    const q = searchQuery.toLowerCase().trim();
-    const matchesSearch =
-      !q ||
-      art.title?.vi?.toLowerCase().includes(q) ||
-      art.title?.en?.toLowerCase().includes(q) ||
-      art.slug?.toLowerCase().includes(q);
-    return matchesCategory && matchesSearch;
+  const filteredArticles = articles.filter(a => {
+    const titleVi = a.title?.vi || '';
+    const titleEn = a.title?.en || '';
+    const matchSearch = titleVi.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                        titleEn.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                        a.slug.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchCategory = selectedCategory === 'all' || a.category === selectedCategory;
+    return matchSearch && matchCategory;
   });
 
   return (
-    <div className="space-y-6 font-sans">
-      {/* Media Picker */}
-      <MediaPickerModal
-        isOpen={mediaPickerOpen}
-        onClose={() => setMediaPickerOpen(false)}
-        onSelect={(media) => {
-          setCurrentArticle({ ...currentArticle, heroImage: media.url });
-        }}
-        token={token}
-        defaultCategory="articles"
-        title="Chọn ảnh đại diện bài viết"
-      />
-
-      {/* Article Preview Modal */}
-      <ArticlePreviewModal
-        isOpen={previewOpen}
-        onClose={() => setPreviewOpen(false)}
-        article={currentArticle as Article}
-      />
-
+    <div className="space-y-6 font-mono-tech text-xs">
+      
+      {/* Editor Modal / View */}
       {isEditing ? (
-        /* Edit / Create Screen */
-        <form onSubmit={handleSave} className="space-y-6 animate-fade-in">
-          {/* Top Sticky Action Bar */}
-          <div className="sticky top-20 z-30 bg-[#18181b]/95 backdrop-blur-md p-4 rounded-xl border border-[#27272a] flex flex-wrap items-center justify-between gap-3 shadow-lg">
-            <button
-              type="button"
-              onClick={() => setIsEditing(false)}
-              className="flex items-center gap-2 text-xs font-medium text-neutral-400 hover:text-white px-3 py-1.5 rounded-lg hover:bg-[#27272a] transition-colors cursor-pointer"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Quay lại danh sách</span>
-            </button>
-
-            <div className="flex items-center gap-3">
+        <form onSubmit={handleSave} className="space-y-6">
+          
+          {/* Header Bar */}
+          <div className="sticky top-20 z-30 bg-[#1C1C20]/95 backdrop-blur border border-[#333] rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-2xl">
+            <div className="flex items-center gap-3 w-full sm:w-auto">
               <button
                 type="button"
-                onClick={() => setPreviewOpen(true)}
-                className="px-3.5 py-1.5 bg-[#27272a] hover:bg-[#3f3f46] text-white rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
+                onClick={() => setIsEditing(false)}
+                className="p-2 hover:bg-[#2A2A30] text-[#AAA] hover:text-white rounded-lg transition-colors cursor-pointer"
               >
-                <Eye className="w-3.5 h-3.5 text-[#f27d26]" />
-                <span>Xem trước bài viết</span>
+                <ArrowLeft className="w-4 h-4" />
               </button>
+              <div>
+                <h2 className="text-sm font-bold text-white uppercase tracking-wider">
+                  {currentArticle.id ? `CHỈNH SỬA: ${currentArticle.title?.vi || 'BÀI VIẾT'}` : 'SOẠN THẢO BÀI VIẾT MỚI'}
+                </h2>
+                <span className="text-[11px] text-[#777] font-mono">
+                  SLUG // {currentArticle.slug || 'chua-dat-slug'}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
+              {/* Language Switcher */}
+              <div className="flex items-center bg-[#141416] border border-[#333] rounded-lg p-1">
+                <button
+                  type="button"
+                  onClick={() => setActiveLangTab('vi')}
+                  className={`px-3 py-1 text-xs font-semibold rounded ${
+                    activeLangTab === 'vi' ? 'bg-[#F27D26] text-white' : 'text-[#AAA] hover:text-white'
+                  }`}
+                >
+                  🇻🇳 Tiếng Việt
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveLangTab('en')}
+                  className={`px-3 py-1 text-xs font-semibold rounded ${
+                    activeLangTab === 'en' ? 'bg-[#F27D26] text-white' : 'text-[#AAA] hover:text-white'
+                  }`}
+                >
+                  🇬🇧 English
+                </button>
+              </div>
 
               <button
                 type="submit"
                 disabled={saving}
-                className="px-5 py-1.5 bg-[#f27d26] hover:bg-[#d96716] text-white rounded-lg text-xs font-semibold flex items-center gap-2 shadow-md transition-colors cursor-pointer"
+                className="px-6 py-2 bg-[#F27D26] hover:bg-[#D86616] text-white font-bold text-xs rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer shadow-lg disabled:opacity-50"
               >
                 <Save className="w-4 h-4" />
-                <span>{saving ? 'Đang lưu...' : 'Lưu bài viết'}</span>
+                <span>{saving ? 'Đang lưu...' : 'LƯU BÀI VIẾT'}</span>
               </button>
             </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            {/* Left 8 Cols: Main Editorial Content */}
+            
+            {/* Main Content Area (8 Cols) */}
             <div className="lg:col-span-8 space-y-6">
               
-              {/* Primary Info Card */}
-              <div className="bg-[#18181b] border border-[#27272a] rounded-xl p-5 sm:p-6 space-y-5">
-                <div className="flex items-center justify-between border-b border-[#27272a] pb-3">
-                  <div className="flex items-center gap-2">
-                    <BookOpen className="w-4 h-4 text-[#f27d26]" />
-                    <span className="text-xs font-bold text-white uppercase tracking-wider">
-                      Thông tin bài viết
-                    </span>
-                  </div>
+              {/* Title & Slug */}
+              <div className="bg-[#18181B] border border-[#2D2D32] rounded-xl p-5 sm:p-6 space-y-4">
+                <span className="text-xs font-bold text-white uppercase tracking-wider block border-b border-[#2D2D32] pb-2">
+                  Tiêu đề & Định danh ({activeLangTab.toUpperCase()})
+                </span>
 
-                  {/* Language switch */}
-                  <div className="flex items-center gap-1 bg-[#121215] p-1 rounded-lg border border-[#27272a]">
-                    <button
-                      type="button"
-                      onClick={() => setActiveLangTab('vi')}
-                      className={`px-2.5 py-0.5 rounded text-[11px] font-medium transition-colors ${
-                        activeLangTab === 'vi' ? 'bg-[#f27d26] text-white' : 'text-neutral-400 hover:text-white'
-                      }`}
-                    >
-                      Tiếng Việt
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setActiveLangTab('en')}
-                      className={`px-2.5 py-0.5 rounded text-[11px] font-medium transition-colors ${
-                        activeLangTab === 'en' ? 'bg-[#f27d26] text-white' : 'text-neutral-400 hover:text-white'
-                      }`}
-                    >
-                      English
-                    </button>
-                  </div>
-                </div>
-
-                {/* Title */}
-                <div>
-                  <label className="block text-xs font-medium text-neutral-300 mb-1.5">
-                    Tiêu đề bài viết ({activeLangTab.toUpperCase()}) <span className="text-red-400">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={activeLangTab === 'vi' ? currentArticle.title?.vi || '' : currentArticle.title?.en || ''}
-                    onChange={(e) => {
-                      const newTitle = {
-                        vi: activeLangTab === 'vi' ? e.target.value : currentArticle.title?.vi || '',
-                        en: activeLangTab === 'en' ? e.target.value : currentArticle.title?.en || ''
-                      };
-                      const updates: any = { title: newTitle };
-                      if (activeLangTab === 'vi' && !currentArticle.id) {
-                        updates.slug = slugify(e.target.value);
-                      }
-                      setCurrentArticle({ ...currentArticle, ...updates });
-                    }}
-                    placeholder={activeLangTab === 'vi' ? 'Nhập tiêu đề bài viết...' : 'Enter article title...'}
-                    className="w-full bg-[#121215] border border-[#3f3f46] rounded-lg px-3.5 py-2 text-sm font-semibold text-white focus:outline-none focus:border-[#f27d26]"
-                  />
-                </div>
-
-                {/* Slug */}
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-xs font-medium text-neutral-300">
-                      Đường dẫn tĩnh (Slug URL) <span className="text-red-400">*</span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[#AAA] mb-1 font-medium">
+                      TIÊU ĐỀ BÀI VIẾT ({activeLangTab.toUpperCase()}) *
                     </label>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (currentArticle.title?.vi) {
-                          setCurrentArticle({ ...currentArticle, slug: slugify(currentArticle.title.vi) });
-                        }
+                    <input
+                      type="text"
+                      required
+                      value={activeLangTab === 'vi' ? (currentArticle.title?.vi || '') : (currentArticle.title?.en || '')}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        const currentTitle = currentArticle.title || { vi: '', en: '' };
+                        setCurrentArticle({
+                          ...currentArticle,
+                          title: {
+                            vi: activeLangTab === 'vi' ? val : (currentTitle.vi || ''),
+                            en: activeLangTab === 'en' ? val : (currentTitle.en || '')
+                          },
+                          slug: !currentArticle.id && activeLangTab === 'vi' ? slugify(val) : currentArticle.slug
+                        });
                       }}
-                      className="text-[11px] text-[#f27d26] hover:underline"
-                    >
-                      Tự động tạo từ tiêu đề
-                    </button>
+                      placeholder="VD: Kiểm soát xung đột cốt thép nút khung dầm cột"
+                      className="w-full bg-[#111] border border-[#444] rounded-lg p-2.5 text-white font-sans text-sm"
+                    />
                   </div>
-                  <div className="flex items-center bg-[#121215] border border-[#3f3f46] rounded-lg px-3 py-2 text-xs font-mono text-neutral-400">
-                    <span className="text-neutral-500 mr-1">/insights/</span>
+
+                  <div>
+                    <label className="block text-[#AAA] mb-1 font-medium">SLUG ĐƯỜNG DẪN *</label>
                     <input
                       type="text"
                       required
                       value={currentArticle.slug || ''}
                       onChange={(e) => setCurrentArticle({ ...currentArticle, slug: slugify(e.target.value) })}
-                      className="flex-1 bg-transparent text-white focus:outline-none"
-                      placeholder="tieu-chuan-shopdrawing-cot-thep"
+                      placeholder="kiem-soat-xung-dot-cot-thep"
+                      className="w-full bg-[#111] border border-[#444] rounded-lg p-2.5 text-white font-mono text-xs"
                     />
                   </div>
                 </div>
 
-                {/* Excerpt */}
                 <div>
-                  <label className="block text-xs font-medium text-neutral-300 mb-1.5">
-                    Đoạn tóm tắt / Lời dẫn ({activeLangTab.toUpperCase()})
+                  <label className="block text-[#AAA] mb-1 font-medium">
+                    TÓM TẮT BÀI VIẾT / EXCERPT ({activeLangTab.toUpperCase()})
                   </label>
                   <textarea
-                    rows={3}
-                    value={activeLangTab === 'vi' ? currentArticle.excerpt?.vi || '' : currentArticle.excerpt?.en || ''}
+                    rows={2}
+                    value={activeLangTab === 'vi' ? (currentArticle.excerpt?.vi || '') : (currentArticle.excerpt?.en || '')}
                     onChange={(e) => {
-                      const newExcerpt = {
-                        vi: activeLangTab === 'vi' ? e.target.value : currentArticle.excerpt?.vi || '',
-                        en: activeLangTab === 'en' ? e.target.value : currentArticle.excerpt?.en || ''
-                      };
-                      setCurrentArticle({ ...currentArticle, excerpt: newExcerpt });
+                      const val = e.target.value;
+                      const currentEx = currentArticle.excerpt || { vi: '', en: '' };
+                      setCurrentArticle({
+                        ...currentArticle,
+                        excerpt: {
+                          vi: activeLangTab === 'vi' ? val : (currentEx.vi || ''),
+                          en: activeLangTab === 'en' ? val : (currentEx.en || '')
+                        }
+                      });
                     }}
-                    placeholder={activeLangTab === 'vi' ? 'Tóm tắt ngắn gọn nội dung bài viết hiển thị ở danh mục và thẻ meta...' : 'Brief summary...'}
-                    className="w-full bg-[#121215] border border-[#3f3f46] rounded-lg p-3 text-xs text-neutral-200 focus:outline-none focus:border-[#f27d26] leading-relaxed"
+                    placeholder="Mô tả tóm tắt 1-2 câu xuất hiện ở danh sách bài viết và thẻ chia sẻ..."
+                    className="w-full bg-[#111] border border-[#444] rounded-lg p-2.5 text-white font-sans text-xs"
                   />
                 </div>
               </div>
 
-              {/* Block-based Content Editor */}
-              <div className="bg-[#18181b] border border-[#27272a] rounded-xl p-5 sm:p-6 space-y-4">
-                <div className="border-b border-[#27272a] pb-3 flex items-center justify-between">
+              {/* WYSIWYG Rich Text Editor (TinyMCE Style) */}
+              <div className="bg-[#18181B] border border-[#2D2D32] rounded-xl p-5 sm:p-6 space-y-3">
+                <div className="flex items-center justify-between border-b border-[#2D2D32] pb-2">
                   <div className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-[#f27d26]" />
+                    <Sparkles className="w-4 h-4 text-[#F27D26]" />
                     <span className="text-xs font-bold text-white uppercase tracking-wider">
-                      Nội dung bài viết (Trình soạn thảo Block)
+                      Trình Soạn Thảo Văn Bản WYSIWYG ({activeLangTab.toUpperCase()})
                     </span>
                   </div>
+                  <span className="text-[10px] text-[#777] font-mono">
+                    SOẠN THẢO TRỰC QUAN • ĐẦY ĐỦ CÔNG CỤ
+                  </span>
                 </div>
 
-                <RichContentEditor
-                  blocks={currentArticle.contentBlocks || []}
-                  onChange={(newBlocks) => setCurrentArticle({ ...currentArticle, contentBlocks: newBlocks })}
+                <WysiwygEditor
+                  key={activeLangTab}
+                  value={getArticleHtml(currentArticle, activeLangTab)}
+                  onChange={(html) => {
+                    const currentHtml = typeof currentArticle.contentHtml === 'object' 
+                      ? currentArticle.contentHtml 
+                      : { vi: '', en: '' };
+                    
+                    setCurrentArticle({
+                      ...currentArticle,
+                      contentHtml: {
+                        vi: activeLangTab === 'vi' ? html : ((currentHtml as any).vi || ''),
+                        en: activeLangTab === 'en' ? html : ((currentHtml as any).en || '')
+                      }
+                    });
+                  }}
                   token={token}
-                  activeLanguage={activeLangTab}
+                  placeholder="Nhập nội dung bài viết phân tích kỹ thuật, chèn hình ảnh, bảng biểu tại đây..."
                 />
               </div>
 
             </div>
 
-            {/* Right 4 Cols: Publishing Settings & Metadata */}
+            {/* Sidebar Meta (4 Cols) */}
             <div className="lg:col-span-4 space-y-6">
               
-              {/* Publishing Status Card */}
-              <div className="bg-[#18181b] border border-[#27272a] rounded-xl p-5 space-y-4">
-                <span className="text-xs font-bold text-white uppercase tracking-wider block border-b border-[#27272a] pb-2">
-                  Trạng thái phát hành
+              {/* Publishing & Category */}
+              <div className="bg-[#18181B] border border-[#2D2D32] rounded-xl p-5 space-y-4">
+                <span className="text-xs font-bold text-white uppercase tracking-wider block border-b border-[#2D2D32] pb-2">
+                  Cài đặt hiển thị & Phân loại
                 </span>
 
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-neutral-300">Công khai bài viết:</span>
+                  <span className="text-xs text-[#CCC]">Công khai bài viết:</span>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input
                       type="checkbox"
@@ -376,266 +379,229 @@ export const AdminArticles: React.FC<AdminArticlesProps> = ({ articles = [], tok
                       onChange={(e) => setCurrentArticle({ ...currentArticle, published: e.target.checked })}
                       className="sr-only peer"
                     />
-                    <div className="w-11 h-6 bg-[#27272a] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#f27d26]"></div>
+                    <div className="w-11 h-6 bg-[#27272A] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#F27D26]"></div>
                   </label>
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-neutral-300">Ghim bài nổi bật:</span>
+                  <span className="text-xs text-[#CCC]">Bài viết nổi bật (Featured):</span>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input
                       type="checkbox"
-                      checked={!!currentArticle.featured}
+                      checked={Boolean(currentArticle.featured)}
                       onChange={(e) => setCurrentArticle({ ...currentArticle, featured: e.target.checked })}
                       className="sr-only peer"
                     />
-                    <div className="w-11 h-6 bg-[#27272a] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#f27d26]"></div>
+                    <div className="w-11 h-6 bg-[#27272A] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#F27D26]"></div>
                   </label>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-neutral-300 mb-1">
-                    Danh mục chuyên môn
-                  </label>
+                  <label className="block text-[#AAA] mb-1 font-medium">CHUYÊN MỤC BÀI VIẾT</label>
                   <select
-                    value={currentArticle.category || 'shopdrawing-standard'}
+                    value={currentArticle.category || 'Kỹ thuật Shopdrawing'}
                     onChange={(e) => setCurrentArticle({ ...currentArticle, category: e.target.value })}
-                    className="w-full bg-[#121215] border border-[#3f3f46] rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-[#f27d26]"
+                    className="w-full bg-[#111] border border-[#444] rounded-lg p-2 text-white"
                   >
-                    <option value="shopdrawing-standard">Tiêu chuẩn Shopdrawing</option>
-                    <option value="rebar-optimization">Tối ưu hóa cốt thép</option>
-                    <option value="bim-revit-coordination">BIM / Revit phối hợp</option>
-                    <option value="site-qa-qc">QA/QC & Nghiệm thu</option>
-                    <option value="case-study">Phân tích ca điển hình</option>
+                    <option value="Kỹ thuật Shopdrawing">Kỹ thuật Shopdrawing</option>
+                    <option value="Tiêu chuẩn TCVN">Tiêu chuẩn TCVN & Quốc tế</option>
+                    <option value="BIM / Revit">BIM / Revit phối hợp</option>
+                    <option value="Biện pháp thi công">Biện pháp thi công</option>
+                    <option value="QA/QC Hiện trường">QA/QC & Nghiệm thu</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-neutral-300 mb-1">
-                    Tác giả / Ban chuyên môn
-                  </label>
+                  <label className="block text-[#AAA] mb-1 font-medium">TÁC GIẢ</label>
                   <input
                     type="text"
-                    value={currentArticle.author || ''}
+                    value={currentArticle.author || 'Ban Kỹ Thuật DEBRIQ'}
                     onChange={(e) => setCurrentArticle({ ...currentArticle, author: e.target.value })}
-                    placeholder="Ban Kỹ Thuật DEBRIQ"
-                    className="w-full bg-[#121215] border border-[#3f3f46] rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-[#f27d26]"
+                    className="w-full bg-[#111] border border-[#444] rounded-lg p-2 text-white font-sans"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-neutral-300 mb-1">
-                    Thời lượng đọc (phút)
-                  </label>
+                  <label className="block text-[#AAA] mb-1 font-medium">THỜI GIAN ĐỌC (PHÚT)</label>
                   <input
                     type="number"
-                    min={1}
                     value={currentArticle.readingTimeMinutes || 5}
-                    onChange={(e) => setCurrentArticle({ ...currentArticle, readingTimeMinutes: Number(e.target.value) })}
-                    className="w-full bg-[#121215] border border-[#3f3f46] rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-[#f27d26]"
+                    onChange={(e) => setCurrentArticle({ ...currentArticle, readingTimeMinutes: parseInt(e.target.value, 10) || 5 })}
+                    className="w-full bg-[#111] border border-[#444] rounded-lg p-2 text-white"
                   />
                 </div>
               </div>
 
-              {/* Hero Image Card */}
-              <div className="bg-[#18181b] border border-[#27272a] rounded-xl p-5 space-y-3">
-                <div className="flex items-center justify-between border-b border-[#27272a] pb-2">
+              {/* Cover Image */}
+              <div className="bg-[#18181B] border border-[#2D2D32] rounded-xl p-5 space-y-3">
+                <div className="flex items-center justify-between border-b border-[#2D2D32] pb-2">
                   <span className="text-xs font-bold text-white uppercase tracking-wider">
-                    Ảnh đại diện bài viết
+                    Ảnh bìa bài viết (Cover Image)
                   </span>
                   <button
                     type="button"
                     onClick={() => setMediaPickerOpen(true)}
-                    className="text-[11px] text-[#f27d26] hover:underline flex items-center gap-1 cursor-pointer"
+                    className="text-[11px] text-[#F27D26] hover:underline flex items-center gap-1 cursor-pointer"
                   >
                     <Upload className="w-3 h-3" /> Chọn ảnh
                   </button>
                 </div>
 
-                <div className="aspect-[16/10] bg-[#121215] border border-[#3f3f46] rounded-lg overflow-hidden">
-                  {currentArticle.heroImage ? (
+                <div className="aspect-video bg-[#111] border border-[#333] rounded-lg overflow-hidden flex items-center justify-center">
+                  {currentArticle.coverImage || currentArticle.heroImage ? (
                     <img
-                      src={currentArticle.heroImage}
+                      src={currentArticle.coverImage || currentArticle.heroImage}
                       alt=""
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-xs text-neutral-500">
-                      Chưa chọn ảnh
-                    </div>
+                    <div className="text-center text-xs text-[#666]">Chưa có ảnh bìa</div>
                   )}
                 </div>
 
                 <input
                   type="text"
-                  value={currentArticle.heroImage || ''}
-                  onChange={(e) => setCurrentArticle({ ...currentArticle, heroImage: e.target.value })}
-                  placeholder="URL ảnh đại diện..."
-                  className="w-full bg-[#121215] border border-[#3f3f46] rounded px-3 py-1 text-xs text-neutral-300 font-mono"
+                  value={currentArticle.coverImage || currentArticle.heroImage || ''}
+                  onChange={(e) => setCurrentArticle({ ...currentArticle, coverImage: e.target.value, heroImage: e.target.value })}
+                  placeholder="URL ảnh bìa bài viết..."
+                  className="w-full bg-[#111] border border-[#444] rounded p-2 text-xs text-white font-mono"
                 />
               </div>
 
             </div>
+
           </div>
         </form>
       ) : (
         /* Articles List Table */
         <div className="space-y-4">
-          {/* Top Bar */}
-          <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-[#18181b] p-4 rounded-xl border border-[#27272a]">
+          
+          {/* Header Bar */}
+          <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-[#1C1C20] p-4 rounded-xl border border-[#333]">
             <div>
-              <h2 className="text-base font-semibold text-white">Quản lý Bài viết & Góc nhìn Kỹ thuật</h2>
-              <p className="text-xs text-neutral-400">Tạo, cập nhật và phát hành bài viết phân tích chuyên sâu chuẩn SEO</p>
+              <h2 className="text-base font-bold text-white uppercase">QUẢN LÝ BÀI VIẾT KỸ THUẬT ({articles.length})</h2>
+              <p className="text-xs text-[#777]">Soạn thảo bài viết, phân tích chuyên môn và cẩm nang thi công công trường</p>
             </div>
 
             <button
               onClick={handleStartCreate}
-              className="px-4 py-2 bg-[#f27d26] hover:bg-[#d96716] text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="px-4 py-2 bg-[#F27D26] hover:bg-[#D86616] text-white rounded-lg text-xs font-bold uppercase flex items-center gap-1.5 transition-colors cursor-pointer"
             >
               <Plus className="w-4 h-4" />
-              <span>Thêm bài viết mới</span>
+              <span>VIẾT BÀI MỚI (WYSIWYG)</span>
             </button>
           </div>
 
-          {/* Filter & Search */}
+          {/* Search & Filter */}
           <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
             <div className="relative w-full sm:w-80">
-              <Search className="w-4 h-4 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <Search className="w-4 h-4 text-[#888] absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Tìm tiêu đề, đường dẫn slug..."
-                className="w-full bg-[#18181b] border border-[#27272a] rounded-lg pl-9 pr-3 py-2 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-[#f27d26]"
+                placeholder="Tìm kiếm bài viết..."
+                className="w-full bg-[#18181B] border border-[#333] rounded-lg pl-9 pr-3 py-2 text-xs text-white focus:outline-none focus:border-[#F27D26]"
               />
             </div>
 
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="bg-[#18181b] border border-[#27272a] rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-[#f27d26] w-full sm:w-auto"
+              className="bg-[#18181B] border border-[#333] text-white text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-[#F27D26]"
             >
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.label}
-                </option>
+              {categories.map(c => (
+                <option key={c.id} value={c.id}>{c.label}</option>
               ))}
             </select>
           </div>
 
-          {/* Articles Table */}
-          <div className="bg-[#18181b] border border-[#27272a] rounded-xl overflow-hidden shadow-sm">
-            {filteredArticles.length === 0 ? (
-              <div className="p-12 text-center space-y-3">
-                <FileText className="w-8 h-8 mx-auto text-neutral-500" />
-                <p className="text-sm font-medium text-neutral-300">Chưa có bài viết nào</p>
-                <button
-                  onClick={handleStartCreate}
-                  className="px-4 py-2 bg-[#f27d26] text-white rounded-lg text-xs font-semibold hover:bg-[#d96716] cursor-pointer"
-                >
-                  Tạo bài viết đầu tiên
-                </button>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-[#121215] text-neutral-400 border-b border-[#27272a] font-medium uppercase text-[11px]">
+          {/* Table */}
+          <div className="bg-[#18181B] border border-[#333] rounded-xl overflow-hidden shadow-xl">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-[#121215] text-[#888] border-b border-[#333] font-mono uppercase text-[11px]">
+                  <tr>
+                    <th className="py-3 px-4">Bài viết</th>
+                    <th className="py-3 px-4">Chuyên mục</th>
+                    <th className="py-3 px-4">Tác giả</th>
+                    <th className="py-3 px-4">Trạng thái</th>
+                    <th className="py-3 px-4 text-right">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#2A2A2E] text-[#CCC]">
+                  {filteredArticles.length === 0 ? (
                     <tr>
-                      <th className="py-3 px-4">Bài viết</th>
-                      <th className="py-3 px-4">Danh mục</th>
-                      <th className="py-3 px-4">Trạng thái</th>
-                      <th className="py-3 px-4">Khối nội dung</th>
-                      <th className="py-3 px-4 text-right">Thao tác</th>
+                      <td colSpan={5} className="p-6 text-center text-[#666]">Không tìm thấy bài viết nào.</td>
                     </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#27272a] text-neutral-300">
-                    {filteredArticles.map((art) => (
-                      <tr key={art.id} className="hover:bg-[#202024] transition-colors">
+                  ) : (
+                    filteredArticles.map((a) => (
+                      <tr key={a.id} className="hover:bg-[#202024] transition-colors">
                         <td className="py-3.5 px-4">
                           <div className="flex items-center gap-3">
-                            <div className="w-12 h-9 rounded bg-[#27272a] overflow-hidden shrink-0">
-                              {art.heroImage && (
-                                <img src={art.heroImage} alt="" className="w-full h-full object-cover" />
+                            <div className="w-12 h-9 rounded bg-[#27272A] overflow-hidden shrink-0">
+                              {(a.coverImage || a.heroImage) && (
+                                <img src={a.coverImage || a.heroImage} alt="" className="w-full h-full object-cover" />
                               )}
                             </div>
                             <div>
-                              <span className="font-semibold text-white block text-sm">
-                                {art.title?.vi || 'Không có tiêu đề'}
+                              <span className="font-semibold text-white block text-sm font-sans">
+                                {a.title?.vi || 'Chưa đặt tiêu đề'}
                               </span>
-                              <span className="text-[11px] text-neutral-500 font-mono">
-                                /insights/{art.slug}
+                              <span className="text-[11px] text-[#666] font-mono">
+                                /insights/{a.slug}
                               </span>
                             </div>
                           </div>
                         </td>
 
-                        <td className="py-3.5 px-4">
-                          <span className="bg-[#27272a] text-neutral-300 px-2 py-0.5 rounded text-[11px]">
-                            {art.category}
+                        <td className="py-3.5 px-4 font-mono text-white">
+                          <span className="bg-[#242428] px-2 py-0.5 border border-[#3A3A40] rounded text-[11px]">
+                            {a.category}
                           </span>
                         </td>
 
-                        <td className="py-3.5 px-4">
-                          <div className="flex items-center gap-2">
-                            {art.published ? (
-                              <span className="inline-flex items-center gap-1 text-emerald-400 bg-emerald-950/40 px-2 py-0.5 rounded text-[11px] font-medium">
-                                <Check className="w-3 h-3" /> Công khai
-                              </span>
-                            ) : (
-                              <span className="text-neutral-500 bg-[#27272a] px-2 py-0.5 rounded text-[11px]">
-                                Bản nháp
-                              </span>
-                            )}
-                            {art.featured && (
-                              <span className="text-[#f27d26] bg-[#f27d26]/10 px-2 py-0.5 rounded text-[11px] font-bold">
-                                Nổi bật
-                              </span>
-                            )}
-                          </div>
+                        <td className="py-3.5 px-4 text-[#AAA] font-sans">
+                          {a.author || 'DEBRIQ'}
                         </td>
 
-                        <td className="py-3.5 px-4 text-neutral-400">
-                          {art.contentBlocks?.length || 0} khối block
+                        <td className="py-3.5 px-4">
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                            a.published !== false ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-neutral-800 text-neutral-400'
+                          }`}>
+                            {a.published !== false ? 'CÔNG KHAI' : 'BẢN NHÁP'}
+                          </span>
                         </td>
 
                         <td className="py-3.5 px-4 text-right">
                           <div className="flex items-center justify-end gap-1.5">
                             <button
-                              onClick={() => {
-                                setCurrentArticle(art);
-                                setPreviewOpen(true);
-                              }}
-                              className="p-1.5 text-neutral-400 hover:text-white rounded hover:bg-[#27272a] transition-colors cursor-pointer"
-                              title="Xem trước"
-                            >
-                              <Eye className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleStartEdit(art)}
-                              className="p-1.5 text-neutral-400 hover:text-white rounded hover:bg-[#27272a] transition-colors cursor-pointer"
+                              onClick={() => handleStartEdit(a)}
+                              className="p-1.5 hover:bg-[#2A2A30] text-[#CCC] hover:text-white rounded transition-colors cursor-pointer"
                               title="Chỉnh sửa bài viết"
                             >
                               <Edit2 className="w-4 h-4" />
                             </button>
-                            {deletingArticleId === art.id ? (
+
+                            {deletingArticleId === a.id ? (
                               <div className="flex items-center gap-1">
                                 <button
-                                  onClick={() => handleDelete(art.id)}
-                                  className="px-2 py-0.5 bg-red-600 hover:bg-red-700 text-white text-[10px] font-bold rounded cursor-pointer"
+                                  onClick={() => handleDelete(a.id)}
+                                  className="px-2 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-[10px] font-bold cursor-pointer"
                                 >
                                   Xóa?
                                 </button>
                                 <button
                                   onClick={() => setDeletingArticleId(null)}
-                                  className="px-1.5 py-0.5 bg-[#333] hover:bg-[#444] text-[#AAA] text-[10px] rounded cursor-pointer"
+                                  className="px-1.5 py-1 bg-[#27272A] text-[#AAA] rounded text-[10px] cursor-pointer"
                                 >
                                   Hủy
                                 </button>
                               </div>
                             ) : (
                               <button
-                                onClick={() => setDeletingArticleId(art.id)}
-                                className="p-1.5 text-red-400 hover:text-red-300 rounded hover:bg-red-950/30 transition-colors cursor-pointer"
+                                onClick={() => setDeletingArticleId(a.id)}
+                                className="p-1.5 hover:bg-red-950/40 text-neutral-400 hover:text-red-400 rounded transition-colors cursor-pointer"
                                 title="Xóa bài viết"
                               >
                                 <Trash2 className="w-4 h-4" />
@@ -644,14 +610,33 @@ export const AdminArticles: React.FC<AdminArticlesProps> = ({ articles = [], tok
                           </div>
                         </td>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
+
         </div>
       )}
+
+      {/* Media Picker Modal */}
+      <MediaPickerModal
+        isOpen={mediaPickerOpen}
+        onClose={() => setMediaPickerOpen(false)}
+        onSelect={(media) => {
+          setCurrentArticle(prev => ({
+            ...prev,
+            coverImage: media.url,
+            heroImage: media.url
+          }));
+          setMediaPickerOpen(false);
+        }}
+        token={token}
+        title="Chọn ảnh bìa bài viết"
+        defaultCategory="articles"
+      />
+
     </div>
   );
 };
