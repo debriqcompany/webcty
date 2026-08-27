@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useLanguage } from '../../context/LanguageContext';
+import { useData } from '../../context/DataContext';
 import { Menu, X, ArrowUpRight } from 'lucide-react';
 
 interface NavbarProps {
@@ -10,6 +11,7 @@ interface NavbarProps {
 
 export const Navbar: React.FC<NavbarProps> = ({ currentPath, navigate, openQuoteModal }) => {
   const { lang, setLanguage } = useLanguage();
+  const { settings } = useData();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navLinks = [
@@ -39,24 +41,32 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, navigate, openQuote
             className="flex items-center gap-3 text-left group focus:outline-none cursor-pointer"
             aria-label="DEBRIQ Home"
           >
-            {/* Isometric Brick Emblem */}
-            <div className="w-8 h-8 sm:w-9 sm:h-9 bg-[#151515] p-1 flex items-center justify-center shrink-0 shadow group-hover:bg-[#F27D26] transition-colors">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none" className="w-full h-full">
-                <g transform="translate(64, 64) scale(0.7) translate(-100, -100)">
-                  <polygon points="100,16 35,53 65,70 130,33" fill="#FFFFFF" stroke="#FFFFFF" strokeWidth="5" strokeLinejoin="round"/>
-                  <polygon points="35,53 65,70 65,108 35,91" fill="#D9D8D3" stroke="#FFFFFF" strokeWidth="5" strokeLinejoin="round"/>
-                  <polygon points="138,38 73,75 103,92 168,55" fill="#FFFFFF" stroke="#FFFFFF" strokeWidth="5" strokeLinejoin="round"/>
-                  <polygon points="73,75 103,92 103,130 73,113" fill="#D9D8D3" stroke="#FFFFFF" strokeWidth="5" strokeLinejoin="round"/>
-                  <polygon points="103,92 168,55 168,93 103,130" fill="#B5B4AE" stroke="#FFFFFF" strokeWidth="5" strokeLinejoin="round"/>
-                  <polygon points="35,103 100,140 100,178 35,141" fill="#FFFFFF" stroke="#FFFFFF" strokeWidth="5" strokeLinejoin="round"/>
-                  <polygon points="100,140 130,123 130,161 100,178" fill="#D9D8D3" stroke="#FFFFFF" strokeWidth="5" strokeLinejoin="round"/>
-                  <polygon points="138,118 168,101 168,139 138,156" fill="#F27D26" stroke="#FFFFFF" strokeWidth="5" strokeLinejoin="round"/>
-                </g>
-              </svg>
-            </div>
+            {settings?.logoUrl ? (
+              <img 
+                src={settings.logoUrl} 
+                alt={settings.displayName || 'DEBRIQ'} 
+                className="w-9 h-9 sm:w-10 sm:h-10 object-contain"
+              />
+            ) : (
+              /* Isometric Brick Emblem */
+              <div className="w-8 h-8 sm:w-9 sm:h-9 bg-[#151515] p-1 flex items-center justify-center shrink-0 shadow group-hover:bg-[#F27D26] transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none" className="w-full h-full">
+                  <g transform="translate(64, 64) scale(0.7) translate(-100, -100)">
+                    <polygon points="100,16 35,53 65,70 130,33" fill="#FFFFFF" stroke="#FFFFFF" strokeWidth="5" strokeLinejoin="round"/>
+                    <polygon points="35,53 65,70 65,108 35,91" fill="#D9D8D3" stroke="#FFFFFF" strokeWidth="5" strokeLinejoin="round"/>
+                    <polygon points="138,38 73,75 103,92 168,55" fill="#FFFFFF" stroke="#FFFFFF" strokeWidth="5" strokeLinejoin="round"/>
+                    <polygon points="73,75 103,92 103,130 73,113" fill="#D9D8D3" stroke="#FFFFFF" strokeWidth="5" strokeLinejoin="round"/>
+                    <polygon points="103,92 168,55 168,93 103,130" fill="#B5B4AE" stroke="#FFFFFF" strokeWidth="5" strokeLinejoin="round"/>
+                    <polygon points="35,103 100,140 100,178 35,141" fill="#FFFFFF" stroke="#FFFFFF" strokeWidth="5" strokeLinejoin="round"/>
+                    <polygon points="100,140 130,123 130,161 100,178" fill="#D9D8D3" stroke="#FFFFFF" strokeWidth="5" strokeLinejoin="round"/>
+                    <polygon points="138,118 168,101 168,139 138,156" fill="#F27D26" stroke="#FFFFFF" strokeWidth="5" strokeLinejoin="round"/>
+                  </g>
+                </svg>
+              </div>
+            )}
             <div className="flex flex-col">
               <span className="text-xl sm:text-2xl font-bold font-display tracking-tight text-[#151515] leading-none group-hover:text-[#F27D26] transition-colors">
-                DEBRIQ
+                {settings?.displayName || 'DEBRIQ'}
               </span>
               <span className="font-mono-tech text-[8px] sm:text-[9px] font-medium tracking-[0.14em] text-[#767670] uppercase mt-0.5">
                 ENGINEERING

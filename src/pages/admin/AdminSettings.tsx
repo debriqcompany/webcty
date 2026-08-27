@@ -14,9 +14,13 @@ import {
   Trash2, 
   KeyRound, 
   AlertCircle,
-  ShieldAlert
+  Image as ImageIcon,
+  Share2,
+  Upload,
+  Globe
 } from 'lucide-react';
 import { useAdminAuth } from '../../context/AdminAuthContext';
+import { MediaPickerModal } from '../../components/admin/MediaPickerModal';
 
 interface AdminSettingsProps {
   settings: CompanySettings | null;
@@ -38,6 +42,12 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ settings, refreshD
     companyName: settings?.companyName || 'CÔNG TY TNHH KỸ THUẬT DEBRIQ',
     displayName: settings?.displayName || 'DEBRIQ',
     tagline: settings?.tagline || 'KỸ THUẬT THI CÔNG & SHOPDRAWING CHUYÊN NGHIỆP',
+    logoUrl: settings?.logoUrl || '',
+    footerLogoUrl: settings?.footerLogoUrl || '',
+    faviconUrl: settings?.faviconUrl || '',
+    ogImageUrl: settings?.ogImageUrl || '',
+    ogTitle: settings?.ogTitle || 'DEBRIQ ENGINEERING — Kỹ thuật thi công & Shopdrawing chuẩn xác',
+    ogDescription: settings?.ogDescription || 'Giải pháp Shopdrawing kết cấu, hoàn thiện, BIM/Revit và biện pháp thi công cho tổng thầu và nhà thầu chuyên nghiệp.',
     hotline: settings?.hotline || '0983 147 456',
     zalo: settings?.zalo || '0983 147 456',
     email: settings?.email || 'contact@debriq.vn',
@@ -50,6 +60,10 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ settings, refreshD
 
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
+
+  // Media Picker State
+  const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
+  const [activeMediaTarget, setActiveMediaTarget] = useState<'logo' | 'footerLogo' | 'favicon' | 'ogImage' | null>(null);
 
   // Sync state if settings prop changes
   useEffect(() => {
@@ -128,6 +142,20 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ settings, refreshD
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleMediaSelect = (media: { url: string }) => {
+    if (activeMediaTarget === 'logo') {
+      setFormData(prev => ({ ...prev, logoUrl: media.url }));
+    } else if (activeMediaTarget === 'footerLogo') {
+      setFormData(prev => ({ ...prev, footerLogoUrl: media.url }));
+    } else if (activeMediaTarget === 'favicon') {
+      setFormData(prev => ({ ...prev, faviconUrl: media.url }));
+    } else if (activeMediaTarget === 'ogImage') {
+      setFormData(prev => ({ ...prev, ogImageUrl: media.url }));
+    }
+    setMediaPickerOpen(false);
+    setActiveMediaTarget(null);
   };
 
   const handleCreateUser = async (e: React.FormEvent) => {
@@ -249,17 +277,308 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ settings, refreshD
         <div className="bg-emerald-950/80 border border-emerald-500/40 text-emerald-200 p-4 rounded flex items-center justify-between shadow-lg">
           <div className="flex items-center gap-2.5">
             <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
-            <span className="font-semibold text-sm">Cài đặt thông tin doanh nghiệp đã được lưu thành công!</span>
+            <span className="font-semibold text-sm">Cài đặt hệ thống đã được lưu thành công và đồng bộ lên Firebase!</span>
           </div>
           <span className="text-xs text-emerald-400 font-mono">200 OK</span>
         </div>
       )}
 
       {/* =========================================================================
-          GENERAL COMPANY SETTINGS
+          GENERAL & BRAND SETTINGS FORM
           ========================================================================= */}
       <form onSubmit={handleSave} className="space-y-8">
         
+        {/* 1. BRAND ASSETS: LOGO & FAVICON (USER CONTROLLED) */}
+        <div className="bg-[#181818] border border-[#2D2D2D] rounded-lg overflow-hidden shadow-xl">
+          <div className="bg-[#202020] p-5 border-b border-[#2D2D2D] flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-[#F27D26]/10 border border-[#F27D26]/30 flex items-center justify-center text-[#F27D26]">
+              <ImageIcon className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-[#F3F2EE]">
+                Quản lý Logo, Biểu tượng & Favicon Web
+              </h2>
+              <p className="text-xs text-[#888] mt-0.5">
+                Tự upload hoặc đổi Logo đầu trang, Logo chân trang và Favicon icon hiển thị trên tab trình duyệt
+              </p>
+            </div>
+          </div>
+
+          <div className="p-6 sm:p-8 space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              
+              {/* Header Logo */}
+              <div className="bg-[#121214] border border-[#333] p-4 rounded-lg space-y-3 flex flex-col justify-between">
+                <div>
+                  <label className="block text-[#F27D26] font-bold text-xs uppercase mb-1">
+                    1. LOGO THANH ĐIỀU HƯỚNG (NAVBAR)
+                  </label>
+                  <p className="text-[11px] text-[#777] mb-3">
+                    Hiển thị ở góc trên bên trái menu chính (PNG, SVG, JPG nền trong suốt)
+                  </p>
+
+                  <div className="h-24 bg-[#1E1E22] border border-dashed border-[#444] rounded flex items-center justify-center p-2 mb-3">
+                    {formData.logoUrl ? (
+                      <img src={formData.logoUrl} alt="Header Logo" className="max-h-20 max-w-full object-contain" />
+                    ) : (
+                      <span className="text-[11px] text-[#666] italic">[ Đang dùng Logo mặc định ]</span>
+                    )}
+                  </div>
+
+                  <input
+                    type="text"
+                    value={formData.logoUrl || ''}
+                    onChange={(e) => setFormData({ ...formData, logoUrl: e.target.value })}
+                    placeholder="https://... hoặc /uploads/logo.svg"
+                    className="w-full bg-[#1A1A1E] border border-[#444] focus:border-[#F27D26] p-2 text-white text-xs rounded focus:outline-none mb-2"
+                  />
+                </div>
+
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveMediaTarget('logo');
+                      setMediaPickerOpen(true);
+                    }}
+                    className="w-full bg-[#2A2A2E] hover:bg-[#38383E] text-white py-2 text-xs font-semibold rounded inline-flex items-center justify-center gap-1.5 cursor-pointer border border-[#444]"
+                  >
+                    <Upload className="w-3.5 h-3.5 text-[#F27D26]" />
+                    <span>Chọn / Upload Logo</span>
+                  </button>
+                  {formData.logoUrl && (
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, logoUrl: '' })}
+                      className="px-2.5 bg-red-950/60 hover:bg-red-900 border border-red-800 text-red-300 rounded cursor-pointer"
+                      title="Xóa về mặc định"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Footer Logo */}
+              <div className="bg-[#121214] border border-[#333] p-4 rounded-lg space-y-3 flex flex-col justify-between">
+                <div>
+                  <label className="block text-[#F27D26] font-bold text-xs uppercase mb-1">
+                    2. LOGO CHÂN TRANG (FOOTER)
+                  </label>
+                  <p className="text-[11px] text-[#777] mb-3">
+                    Hiển thị ở huy hiệu kỹ thuật phía dưới cùng website
+                  </p>
+
+                  <div className="h-24 bg-[#1E1E22] border border-dashed border-[#444] rounded flex items-center justify-center p-2 mb-3">
+                    {formData.footerLogoUrl ? (
+                      <img src={formData.footerLogoUrl} alt="Footer Logo" className="max-h-20 max-w-full object-contain" />
+                    ) : (
+                      <span className="text-[11px] text-[#666] italic">[ Đang dùng Logo mặc định ]</span>
+                    )}
+                  </div>
+
+                  <input
+                    type="text"
+                    value={formData.footerLogoUrl || ''}
+                    onChange={(e) => setFormData({ ...formData, footerLogoUrl: e.target.value })}
+                    placeholder="https://... hoặc /uploads/footer-logo.svg"
+                    className="w-full bg-[#1A1A1E] border border-[#444] focus:border-[#F27D26] p-2 text-white text-xs rounded focus:outline-none mb-2"
+                  />
+                </div>
+
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveMediaTarget('footerLogo');
+                      setMediaPickerOpen(true);
+                    }}
+                    className="w-full bg-[#2A2A2E] hover:bg-[#38383E] text-white py-2 text-xs font-semibold rounded inline-flex items-center justify-center gap-1.5 cursor-pointer border border-[#444]"
+                  >
+                    <Upload className="w-3.5 h-3.5 text-[#F27D26]" />
+                    <span>Chọn / Upload Logo</span>
+                  </button>
+                  {formData.footerLogoUrl && (
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, footerLogoUrl: '' })}
+                      className="px-2.5 bg-red-950/60 hover:bg-red-900 border border-red-800 text-red-300 rounded cursor-pointer"
+                      title="Xóa về mặc định"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Favicon Icon */}
+              <div className="bg-[#121214] border border-[#333] p-4 rounded-lg space-y-3 flex flex-col justify-between">
+                <div>
+                  <label className="block text-[#F27D26] font-bold text-xs uppercase mb-1">
+                    3. BIỂU TƯỢNG TAB WEB (FAVICON)
+                  </label>
+                  <p className="text-[11px] text-[#777] mb-3">
+                    Icon nhỏ hiển thị trên tab trình duyệt (.svg, .png, .ico kích thước vuông)
+                  </p>
+
+                  <div className="h-24 bg-[#1E1E22] border border-dashed border-[#444] rounded flex items-center justify-center p-2 mb-3">
+                    {formData.faviconUrl ? (
+                      <img src={formData.faviconUrl} alt="Favicon" className="w-10 h-10 object-contain" />
+                    ) : (
+                      <span className="text-[11px] text-[#666] italic">[ Đang dùng Favicon mặc định ]</span>
+                    )}
+                  </div>
+
+                  <input
+                    type="text"
+                    value={formData.faviconUrl || ''}
+                    onChange={(e) => setFormData({ ...formData, faviconUrl: e.target.value })}
+                    placeholder="https://... hoặc /favicon.svg"
+                    className="w-full bg-[#1A1A1E] border border-[#444] focus:border-[#F27D26] p-2 text-white text-xs rounded focus:outline-none mb-2"
+                  />
+                </div>
+
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveMediaTarget('favicon');
+                      setMediaPickerOpen(true);
+                    }}
+                    className="w-full bg-[#2A2A2E] hover:bg-[#38383E] text-white py-2 text-xs font-semibold rounded inline-flex items-center justify-center gap-1.5 cursor-pointer border border-[#444]"
+                  >
+                    <Upload className="w-3.5 h-3.5 text-[#F27D26]" />
+                    <span>Chọn / Upload Favicon</span>
+                  </button>
+                  {formData.faviconUrl && (
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, faviconUrl: '' })}
+                      className="px-2.5 bg-red-950/60 hover:bg-red-900 border border-red-800 text-red-300 rounded cursor-pointer"
+                      title="Xóa về mặc định"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        {/* 2. SOCIAL MEDIA SHARE PREVIEW & OPENGRAPH SETTINGS */}
+        <div className="bg-[#181818] border border-[#2D2D2D] rounded-lg overflow-hidden shadow-xl">
+          <div className="bg-[#202020] p-5 border-b border-[#2D2D2D] flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-[#F27D26]/10 border border-[#F27D26]/30 flex items-center justify-center text-[#F27D26]">
+              <Share2 className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-[#F3F2EE]">
+                Cấu hình Link Preview & Chia sẻ Mạng Xã Hội (Facebook, Zalo, Telegram)
+              </h2>
+              <p className="text-xs text-[#888] mt-0.5">
+                Thiết lập hình ảnh, tiêu đề và mô tả xuất hiện khi gửi link trang web <strong className="text-white">debriq.vn</strong> qua tin nhắn Zalo, Facebook, Viber
+              </p>
+            </div>
+          </div>
+
+          <div className="p-6 sm:p-8 space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+              
+              {/* Form Input Side */}
+              <div className="lg:col-span-7 space-y-5">
+                <div>
+                  <label className="block text-[#AAA] font-medium mb-1.5">
+                    ẢNH ĐẠI DIỆN LINK PREVIEW (OG IMAGE) — KHUYẾN NGHỊ 1200x630px *
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={formData.ogImageUrl || ''}
+                      onChange={(e) => setFormData({ ...formData, ogImageUrl: e.target.value })}
+                      placeholder="https://debriq.vn/og-preview.jpg"
+                      className="flex-1 bg-[#111] border border-[#444] focus:border-[#F27D26] p-2.5 text-white rounded focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveMediaTarget('ogImage');
+                        setMediaPickerOpen(true);
+                      }}
+                      className="bg-[#2A2A2E] hover:bg-[#38383E] text-white px-4 font-medium rounded inline-flex items-center gap-1.5 cursor-pointer border border-[#444]"
+                    >
+                      <Upload className="w-4 h-4 text-[#F27D26]" />
+                      <span>Chọn ảnh</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[#AAA] font-medium mb-1.5">
+                    TIÊU ĐỀ CHIA SẺ (OG TITLE) *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.ogTitle || ''}
+                    onChange={(e) => setFormData({ ...formData, ogTitle: e.target.value })}
+                    placeholder="DEBRIQ ENGINEERING — Kỹ thuật thi công & Shopdrawing"
+                    className="w-full bg-[#111] border border-[#444] focus:border-[#F27D26] p-2.5 text-white rounded focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[#AAA] font-medium mb-1.5">
+                    MÔ TẢ NGẮN CHIA SẺ (OG DESCRIPTION) *
+                  </label>
+                  <textarea
+                    rows={3}
+                    required
+                    value={formData.ogDescription || ''}
+                    onChange={(e) => setFormData({ ...formData, ogDescription: e.target.value })}
+                    placeholder="Giải pháp Shopdrawing kết cấu, hoàn thiện, BIM/Revit và biện pháp thi công..."
+                    className="w-full bg-[#111] border border-[#444] focus:border-[#F27D26] p-2.5 text-white rounded focus:outline-none font-sans"
+                  />
+                </div>
+              </div>
+
+              {/* Live Preview Simulator (Zalo / Facebook style) */}
+              <div className="lg:col-span-5 space-y-3">
+                <span className="text-[11px] text-[#888] uppercase font-mono tracking-wider block">
+                  XEM TRƯỚC GIAO DIỆN KHI GỬI LINK QUA ZALO / FACEBOOK:
+                </span>
+                
+                <div className="bg-[#242526] border border-[#3A3B3C] rounded-lg overflow-hidden shadow-2xl">
+                  <div className="aspect-[1.91/1] bg-[#18191A] relative overflow-hidden flex items-center justify-center">
+                    {formData.ogImageUrl ? (
+                      <img src={formData.ogImageUrl} alt="OG Preview" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="text-center p-6 text-[#666]">
+                        <ImageIcon className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                        <span className="text-xs font-mono">Chưa có ảnh xem trước</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-3.5 space-y-1 bg-[#242526]">
+                    <span className="text-[10px] text-[#B0B3B8] uppercase font-mono tracking-wide block">
+                      DEBRIQ.VN
+                    </span>
+                    <h4 className="font-bold text-sm text-[#E4E6EB] line-clamp-2 leading-snug">
+                      {formData.ogTitle || 'DEBRIQ ENGINEERING — Kỹ thuật thi công & Shopdrawing'}
+                    </h4>
+                    <p className="text-xs text-[#B0B3B8] line-clamp-2 leading-relaxed">
+                      {formData.ogDescription || 'Giải pháp Shopdrawing kết cấu, hoàn thiện, BIM/Revit và biện pháp thi công chuẩn xác theo tiến độ công trường.'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        {/* 3. GENERAL COMPANY INFORMATION */}
         <div className="bg-[#181818] border border-[#2D2D2D] rounded-lg overflow-hidden shadow-xl">
           
           <div className="bg-[#202020] p-5 border-b border-[#2D2D2D] flex items-center gap-3">
@@ -300,6 +619,17 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ settings, refreshD
                   className="w-full bg-[#111] border border-[#444] focus:border-[#F27D26] p-2.5 text-white rounded focus:outline-none"
                 />
               </div>
+            </div>
+
+            <div>
+              <label className="block text-[#AAA] font-medium mb-1.5">Slogan / Tagline thương hiệu *</label>
+              <input
+                type="text"
+                required
+                value={formData.tagline || ''}
+                onChange={(e) => setFormData({ ...formData, tagline: e.target.value })}
+                className="w-full bg-[#111] border border-[#444] focus:border-[#F27D26] p-2.5 text-white rounded focus:outline-none"
+              />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
@@ -701,6 +1031,18 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ settings, refreshD
         </form>
 
       </div>
+
+      {/* Media Picker Modal */}
+      <MediaPickerModal
+        isOpen={mediaPickerOpen}
+        onClose={() => {
+          setMediaPickerOpen(false);
+          setActiveMediaTarget(null);
+        }}
+        onSelect={handleMediaSelect}
+        token={token}
+        title="Chọn ảnh từ Thư viện Media trên VPS"
+      />
 
     </div>
   );

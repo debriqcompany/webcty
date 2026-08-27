@@ -27,6 +27,7 @@ export const ProjectDetailPage: React.FC<ProjectDetailPageProps> = ({ slug, navi
   const { projects, getProjectBySlug } = useData();
 
   const [activeImage, setActiveImage] = useState<ProjectImage | null>(null);
+  const [galleryFilter, setGalleryFilter] = useState<'all' | 'drawing' | 'rendering' | 'site_photo' | 'photo'>('all');
 
   const project = getProjectBySlug(slug);
 
@@ -281,9 +282,34 @@ export const ProjectDetailPage: React.FC<ProjectDetailPageProps> = ({ slug, navi
             {/* Right Col: Technical Blueprint & Action Sidebar */}
             <div className="lg:col-span-5 space-y-6">
               
-              {/* Dynamic Technical Vector based on project type */}
+              {/* Dynamic Technical Vector or Custom Drawing Image */}
               <div className="border-2 border-[#151515] bg-[#181818] p-2 shadow-md">
-                {project.slug === 'the-one-world-one-era' ? (
+                {project.drawingType === 'custom_image' && project.drawingImageUrl ? (
+                  <div className="relative group overflow-hidden bg-[#111]">
+                    <img
+                      src={project.drawingImageUrl}
+                      alt={project.drawingCaption ? t(project.drawingCaption) : 'Technical Drawing'}
+                      className="w-full max-h-[380px] object-contain cursor-pointer group-hover:scale-105 transition-transform duration-300"
+                      onClick={() => setActiveImage({
+                        id: 'custom-drawing',
+                        url: project.drawingImageUrl!,
+                        caption: project.drawingCaption || { vi: 'Bản vẽ kỹ thuật dự án', en: 'Project technical drawing' },
+                        type: 'drawing'
+                      })}
+                    />
+                    <div className="p-2.5 bg-[#1A1A1A] border-t border-[#333] flex justify-between items-center text-[10px] font-mono-tech text-[#AAA]">
+                      <span className="text-[#F27D26] font-bold">APPROVED SHOPDRAWING ARCHIVE</span>
+                      <span className="text-white flex items-center gap-1 cursor-pointer" onClick={() => setActiveImage({
+                        id: 'custom-drawing',
+                        url: project.drawingImageUrl!,
+                        caption: project.drawingCaption || { vi: 'Bản vẽ kỹ thuật dự án', en: 'Project technical drawing' },
+                        type: 'drawing'
+                      })}>
+                        <Maximize2 className="w-3 h-3" /> Phóng to
+                      </span>
+                    </div>
+                  </div>
+                ) : project.slug === 'the-one-world-one-era' ? (
                   <TechnicalFinishingDetail />
                 ) : project.slug === 'opera-tay-ho-nha-hat-ngoc-trai' ? (
                   <TechnicalBimClashNode />
@@ -323,47 +349,98 @@ export const ProjectDetailPage: React.FC<ProjectDetailPageProps> = ({ slug, navi
           {/* Gallery & Shopdrawing Lightbox Strip */}
           {project.gallery && project.gallery.length > 0 && (
             <div className="space-y-6 pt-12 border-t border-[#D9D8D3]">
-              <div>
-                <span className="type-section-label text-[#F27D26] block mb-1">
-                  // {lang === 'vi' ? 'HỒ SƠ HÌNH ẢNH & BẢN VẼ' : 'DRAWINGS & SITE GALLERY'}
-                </span>
-                <h2 className="font-display text-2xl sm:text-3xl font-bold text-[#151515] tracking-tight">
-                  {lang === 'vi' ? 'Hình ảnh hiện trường & bản vẽ Shopdrawing' : 'Drawings & Site Photography'}
-                </h2>
+              <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                <div>
+                  <span className="type-section-label text-[#F27D26] block mb-1">
+                    // {lang === 'vi' ? 'HỒ SƠ HÌNH ẢNH & BẢN VẼ' : 'DRAWINGS & SITE GALLERY'}
+                  </span>
+                  <h2 className="font-display text-2xl sm:text-3xl font-bold text-[#151515] tracking-tight">
+                    {lang === 'vi' ? 'Hình ảnh hiện trường & bản vẽ Shopdrawing' : 'Drawings & Site Photography'}
+                  </h2>
+                </div>
+
+                {/* Filter Tabs for Gallery */}
+                <div className="flex flex-wrap items-center gap-1.5 font-mono-tech text-[11px]">
+                  <button
+                    onClick={() => setGalleryFilter('all')}
+                    className={`px-3 py-1 border transition-colors cursor-pointer ${
+                      galleryFilter === 'all'
+                        ? 'bg-[#151515] text-white border-[#151515] font-bold'
+                        : 'bg-[#EAE9E4] text-[#666] border-[#D9D8D3] hover:border-[#999]'
+                    }`}
+                  >
+                    {lang === 'vi' ? 'TẤT CẢ' : 'ALL'} ({project.gallery.length})
+                  </button>
+                  <button
+                    onClick={() => setGalleryFilter('drawing')}
+                    className={`px-3 py-1 border transition-colors cursor-pointer ${
+                      galleryFilter === 'drawing'
+                        ? 'bg-[#151515] text-white border-[#151515] font-bold'
+                        : 'bg-[#EAE9E4] text-[#666] border-[#D9D8D3] hover:border-[#999]'
+                    }`}
+                  >
+                    📐 {lang === 'vi' ? 'BẢN VẼ' : 'DRAWINGS'}
+                  </button>
+                  <button
+                    onClick={() => setGalleryFilter('rendering')}
+                    className={`px-3 py-1 border transition-colors cursor-pointer ${
+                      galleryFilter === 'rendering'
+                        ? 'bg-[#151515] text-white border-[#151515] font-bold'
+                        : 'bg-[#EAE9E4] text-[#666] border-[#D9D8D3] hover:border-[#999]'
+                    }`}
+                  >
+                    🏢 {lang === 'vi' ? 'PHỐI CẢNH' : 'RENDERS'}
+                  </button>
+                  <button
+                    onClick={() => setGalleryFilter('site_photo')}
+                    className={`px-3 py-1 border transition-colors cursor-pointer ${
+                      galleryFilter === 'site_photo'
+                        ? 'bg-[#151515] text-white border-[#151515] font-bold'
+                        : 'bg-[#EAE9E4] text-[#666] border-[#D9D8D3] hover:border-[#999]'
+                    }`}
+                  >
+                    🏗️ {lang === 'vi' ? 'HIỆN TRƯỜNG' : 'SITE'}
+                  </button>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {project.gallery.map((img) => (
-                  <div
-                    key={img.id}
-                    className="group border border-[#D9D8D3] bg-[#EAE9E4] overflow-hidden cursor-pointer hover:border-[#151515] transition-all"
-                    onClick={() => setActiveImage(img)}
-                  >
-                    <div className="relative aspect-[4/3] bg-[#222] overflow-hidden">
-                      <img
-                        src={img.url}
-                        alt={img.alt || t(img.caption)}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
-                      <div className="absolute inset-0 bg-[#151515]/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <span className="bg-[#151515] text-white px-3 py-1 font-sans text-[11px] uppercase tracking-wider font-medium flex items-center gap-1.5">
-                          <Maximize2 className="w-3.5 h-3.5" />
-                          {lang === 'vi' ? 'Phóng to' : 'Enlarge'}
-                        </span>
+                {project.gallery
+                  .filter(img => {
+                    if (galleryFilter === 'all') return true;
+                    return img.type === galleryFilter;
+                  })
+                  .map((img) => (
+                    <div
+                      key={img.id}
+                      className="group border border-[#D9D8D3] bg-[#EAE9E4] overflow-hidden cursor-pointer hover:border-[#151515] transition-all"
+                      onClick={() => setActiveImage(img)}
+                    >
+                      <div className="relative aspect-[4/3] bg-[#222] overflow-hidden">
+                        <img
+                          src={img.url}
+                          alt={img.alt || t(img.caption)}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                        <div className="absolute inset-0 bg-[#151515]/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <span className="bg-[#151515] text-white px-3 py-1 font-sans text-[11px] uppercase tracking-wider font-medium flex items-center gap-1.5">
+                            <Maximize2 className="w-3.5 h-3.5" />
+                            {lang === 'vi' ? 'Phóng to' : 'Enlarge'}
+                          </span>
+                        </div>
+                        <div className="absolute top-2 left-2">
+                          <span className="bg-[#151515]/90 text-white font-mono-tech text-[9px] px-2 py-0.5 uppercase border border-[#444]">
+                            {img.type === 'drawing' ? 'Bản vẽ Shopdrawing' : img.type === 'rendering' ? 'Phối cảnh 3D' : img.type === 'site_photo' ? 'Hiện trường' : 'Hình ảnh'}
+                          </span>
+                        </div>
                       </div>
-                      <div className="absolute top-2 left-2">
-                        <span className="bg-[#151515]/90 text-white font-mono-tech text-[9px] px-2 py-0.5 uppercase border border-[#444]">
-                          {img.type}
-                        </span>
+                      <div className="p-3">
+                        <p className="font-sans text-xs text-[#333] truncate font-medium">
+                          {t(img.caption)}
+                        </p>
                       </div>
                     </div>
-                    <div className="p-3">
-                      <p className="font-sans text-xs text-[#333] truncate font-medium">
-                        {t(img.caption)}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+                  ))}
               </div>
             </div>
           )}

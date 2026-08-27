@@ -85,6 +85,9 @@ export interface Project {
   projectDescription?: BilingualText;
   highlights: BilingualText[];
   technicalOverview?: BilingualText;
+  drawingType?: 'vector' | 'custom_image';
+  drawingImageUrl?: string;
+  drawingCaption?: BilingualText;
   heroImage: string;
   thumbnailImage?: string;
   gallery: ProjectImage[];
@@ -203,6 +206,12 @@ export interface CompanySettings {
   companyName?: string;
   displayName?: string;
   tagline?: string;
+  logoUrl?: string;          // Header logo (square or rectangle)
+  footerLogoUrl?: string;    // Footer logo
+  faviconUrl?: string;       // Favicon icon (.svg, .png, .ico)
+  ogImageUrl?: string;       // Social Share link preview image (1200x630px)
+  ogTitle?: string;          // Social Share Title
+  ogDescription?: string;    // Social Share Description
   foundedYear?: string;
   activeSince?: string;
   activeStatement?: BilingualText;

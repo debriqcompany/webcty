@@ -7,6 +7,7 @@ import { Navbar } from './components/public/Navbar';
 import { Footer } from './components/public/Footer';
 import { QuoteModal } from './components/public/QuoteModal';
 import { DrawingViewerModal } from './components/public/DrawingViewerModal';
+import { IntroSplash } from './components/public/IntroSplash';
 
 // Public Pages
 import { HomePage } from './pages/public/HomePage';
@@ -42,7 +43,17 @@ const AppContent: React.FC = () => {
   const [drawingViewerCategory, setDrawingViewerCategory] = useState<string>('all');
 
   const { isAuthenticated, loading: checkingAuth } = useAdminAuth();
-  const { loading: dataLoading } = useData();
+  const { loading: dataLoading, settings } = useData();
+
+  // Sync Favicon from Admin Settings
+  useEffect(() => {
+    if (settings?.faviconUrl) {
+      const link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
+      if (link) {
+        link.href = settings.faviconUrl;
+      }
+    }
+  }, [settings?.faviconUrl]);
 
   // Handle browser back / forward navigation
   useEffect(() => {
@@ -207,6 +218,9 @@ const AppContent: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col bg-[#F3F2EE] text-[#151515] antialiased selection:bg-[#F27D26] selection:text-white">
       
+      {/* Cinematic Architectural Splash Intro for initial entrance */}
+      {!isAdminRoute && <IntroSplash />}
+
       {/* Public Navbar (Hidden on Admin pages) */}
       {!isAdminRoute && (
         <Navbar

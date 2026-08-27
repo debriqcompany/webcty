@@ -18,7 +18,10 @@ import {
   Search,
   Building2,
   FolderGit2,
-  Sparkles
+  Sparkles,
+  FileText,
+  MoveUp,
+  MoveDown
 } from 'lucide-react';
 import { RichContentEditor } from '../../components/admin/RichContentEditor';
 import { MediaPickerModal } from '../../components/admin/MediaPickerModal';
@@ -36,11 +39,27 @@ export const AdminProjects: React.FC<AdminProjectsProps> = ({ projects = [], ref
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterCategory, setFilterCategory] = useState('all');
   const [activeLangTab, setActiveLangTab] = useState<'vi' | 'en'>('vi');
   const [previewOpen, setPreviewOpen] = useState(false);
+  
+  // Media Picker States
   const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
-  const [activeMediaTarget, setActiveMediaTarget] = useState<'hero' | 'gallery' | null>(null);
+  const [activeMediaTarget, setActiveMediaTarget] = useState<'hero' | 'drawing' | 'galleryNew' | { galleryIndex: number } | null>(null);
+
+  // New Gallery Item Draft State
+  const [newGalleryItem, setNewGalleryItem] = useState<{
+    url: string;
+    captionVi: string;
+    captionEn: string;
+    type: string;
+    alt: string;
+  }>({
+    url: '',
+    captionVi: '',
+    captionEn: '',
+    type: 'drawing',
+    alt: ''
+  });
 
   const authHeaders: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -80,6 +99,9 @@ export const AdminProjects: React.FC<AdminProjectsProps> = ({ projects = [], ref
     },
     services: ['Shopdrawing kết cấu'],
     heroImage: 'https://images.unsplash.com/photo-1541888946425-d0fbb18615f8?auto=format&fit=crop&w=1200&q=80',
+    drawingType: 'vector',
+    drawingImageUrl: '',
+    drawingCaption: { vi: '', en: '' },
     gallery: [],
     highlights: [{ vi: 'Đã hoàn thành bàn giao nghiệm thu', en: 'Completed site handover' }],
     contentBlocks: [
@@ -111,7 +133,11 @@ export const AdminProjects: React.FC<AdminProjectsProps> = ({ projects = [], ref
   };
 
   const handleEdit = (proj: Project) => {
-    setEditingProject(JSON.parse(JSON.stringify(proj)));
+    const copy = JSON.parse(JSON.stringify(proj));
+    if (!copy.gallery) copy.gallery = [];
+    if (!copy.drawingType) copy.drawingType = 'vector';
+    if (!copy.drawingCaption) copy.drawingCaption = { vi: '', en: '' };
+    setEditingProject(copy);
     setIsCreating(false);
     setError(null);
   };
@@ -155,7 +181,7 @@ export const AdminProjects: React.FC<AdminProjectsProps> = ({ projects = [], ref
         headers: authHeaders,
         body: JSON.stringify(updated)
       });
-      if (!res.ok) throw new Error('Cập nhật nổi bật thất bại');
+      if (!res.ok) throw new Error('Cập nhật trạng thái thất bại');
       await refreshData();
     } catch (err: any) {
       alert(err.message);
@@ -167,7 +193,7 @@ export const AdminProjects: React.FC<AdminProjectsProps> = ({ projects = [], ref
     if (!editingProject) return;
 
     if (!editingProject.name.vi || !editingProject.slug || !editingProject.directClient) {
-      setError('Vui lòng điền đủ Tên dự án (VI), Slug URL và Khách hàng trực tiếp.');
+      setError('Vui lòng điền đầy đủ Tên dự án (VI), Slug định danh và Khách hàng trực tiếp.');
       return;
     }
 
@@ -175,8 +201,8 @@ export const AdminProjects: React.FC<AdminProjectsProps> = ({ projects = [], ref
     setError(null);
 
     try {
-      const url = isCreating ? '/api/admin/projects' : `/api/admin/projects/${editingProject.id}`;
       const method = isCreating ? 'POST' : 'PUT';
+      const url = isCreating ? '/api/admin/projects' : `/api/admin/projects/${editingProject.id}`;
 
       const res = await fetch(url, {
         method,
@@ -184,16 +210,13 @@ export const AdminProjects: React.FC<AdminProjectsProps> = ({ projects = [], ref
         body: JSON.stringify(editingProject)
       });
 
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Lỗi khi lưu dữ liệu dự án');
-      }
+      if (!res.ok) throw new Error('Lưu dự án thất bại');
 
       await refreshData();
       setEditingProject(null);
       setIsCreating(false);
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || 'Lỗi khi lưu dữ liệu dự án');
     } finally {
       setSaving(false);
     }
@@ -201,86 +224,126 @@ export const AdminProjects: React.FC<AdminProjectsProps> = ({ projects = [], ref
 
   const handleMediaSelect = (media: { url: string; altText?: string }) => {
     if (!editingProject) return;
+
     if (activeMediaTarget === 'hero') {
       setEditingProject({ ...editingProject, heroImage: media.url });
-    } else if (activeMediaTarget === 'gallery') {
-      const gallery = [...(editingProject.gallery || [])];
-      gallery.push({
-        id: `gallery-${Date.now()}`,
-        url: media.url,
-        type: 'Shopdrawing',
-        caption: media.altText ? { vi: media.altText, en: media.altText } : undefined
-      });
-      setEditingProject({ ...editingProject, gallery });
+    } else if (activeMediaTarget === 'drawing') {
+      setEditingProject({ ...editingProject, drawingImageUrl: media.url, drawingType: 'custom_image' });
+    } else if (activeMediaTarget === 'galleryNew') {
+      setNewGalleryItem(prev => ({ ...prev, url: media.url, alt: media.altText || '' }));
+    } else if (typeof activeMediaTarget === 'object' && activeMediaTarget?.galleryIndex !== undefined) {
+      const idx = activeMediaTarget.galleryIndex;
+      const updatedGallery = [...(editingProject.gallery || [])];
+      if (updatedGallery[idx]) {
+        updatedGallery[idx].url = media.url;
+        setEditingProject({ ...editingProject, gallery: updatedGallery });
+      }
     }
+
     setMediaPickerOpen(false);
+    setActiveMediaTarget(null);
+  };
+
+  // Add Item to Project Gallery
+  const handleAddGalleryItem = () => {
+    if (!editingProject || !newGalleryItem.url) return;
+
+    const newItem: ProjectImage = {
+      id: `img-${Date.now()}`,
+      url: newGalleryItem.url,
+      caption: {
+        vi: newGalleryItem.captionVi || 'Hình ảnh hồ sơ dự án',
+        en: newGalleryItem.captionEn || newGalleryItem.captionVi || 'Project documentation archive'
+      },
+      type: newGalleryItem.type,
+      alt: newGalleryItem.alt || newGalleryItem.captionVi
+    };
+
+    setEditingProject({
+      ...editingProject,
+      gallery: [...(editingProject.gallery || []), newItem]
+    });
+
+    setNewGalleryItem({
+      url: '',
+      captionVi: '',
+      captionEn: '',
+      type: 'drawing',
+      alt: ''
+    });
+  };
+
+  // Remove Gallery Item
+  const handleRemoveGalleryItem = (index: number) => {
+    if (!editingProject) return;
+    const updated = [...(editingProject.gallery || [])];
+    updated.splice(index, 1);
+    setEditingProject({ ...editingProject, gallery: updated });
   };
 
   const filteredProjects = projects.filter((p) => {
-    const q = searchQuery.toLowerCase().trim();
-    const matchesSearch =
-      !q ||
-      p.name?.vi?.toLowerCase().includes(q) ||
-      p.name?.en?.toLowerCase().includes(q) ||
-      p.directClient?.toLowerCase().includes(q) ||
-      p.slug?.toLowerCase().includes(q);
-    const matchesCategory =
-      filterCategory === 'all' || p.services.some((s) => s.toLowerCase().includes(filterCategory.toLowerCase()));
-    return matchesSearch && matchesCategory;
+    const matchesSearch = 
+      p.name.vi.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.name.en?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.directClient.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.slug.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesSearch;
   });
 
   return (
-    <div className="space-y-6 font-sans">
-      {/* Media Picker Modal */}
-      <MediaPickerModal
-        isOpen={mediaPickerOpen}
-        onClose={() => setMediaPickerOpen(false)}
-        onSelect={handleMediaSelect}
-        token={token}
-        defaultCategory="projects"
-        title="Chọn hình ảnh cho Dự án"
-      />
-
-      {/* Project Preview Modal */}
-      {editingProject && (
-        <ProjectPreviewModal
-          isOpen={previewOpen}
-          onClose={() => setPreviewOpen(false)}
-          project={editingProject}
-        />
-      )}
-
-      {/* Edit Form Screen */}
+    <div className="space-y-6">
+      
+      {/* Editor Modal / View */}
       {editingProject ? (
-        <form onSubmit={handleSave} className="space-y-6 animate-fade-in">
-          {/* Top Sticky Header */}
-          <div className="sticky top-20 z-30 bg-[#18181b]/95 backdrop-blur-md p-4 rounded-xl border border-[#27272a] flex flex-wrap items-center justify-between gap-3 shadow-lg">
-            <button
-              type="button"
-              onClick={() => {
-                setEditingProject(null);
-                setIsCreating(false);
-              }}
-              className="flex items-center gap-2 text-xs font-medium text-neutral-400 hover:text-white px-3 py-1.5 rounded-lg hover:bg-[#27272a] transition-colors cursor-pointer"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Quay lại danh sách dự án</span>
-            </button>
-
-            <div className="flex items-center gap-3">
+        <form onSubmit={handleSave} className="space-y-6">
+          
+          {/* Header Action Bar */}
+          <div className="sticky top-20 z-30 bg-[#18181b]/95 backdrop-blur border border-[#27272a] rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
+            <div className="flex items-center gap-3 w-full sm:w-auto">
               <button
                 type="button"
-                onClick={() => setPreviewOpen(true)}
-                className="px-3.5 py-1.5 bg-[#27272a] hover:bg-[#3f3f46] text-white rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
+                onClick={() => setEditingProject(null)}
+                className="p-2 hover:bg-[#27272a] text-neutral-400 hover:text-white rounded-lg transition-colors cursor-pointer"
               >
-                <Eye className="w-3.5 h-3.5 text-[#f27d26]" />
-                <span>Xem trước dự án</span>
+                <ArrowLeft className="w-4 h-4" />
               </button>
+              <div>
+                <h2 className="text-sm font-bold text-white uppercase tracking-wider">
+                  {isCreating ? 'TẠO DỰ ÁN MỚI' : `CHỈNH SỬA: ${editingProject.name.vi || 'DỰ ÁN'}`}
+                </h2>
+                <span className="text-[11px] text-neutral-400 font-mono">
+                  SLUG // {editingProject.slug || 'chua-dat-slug'}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
+              {/* Language Switcher */}
+              <div className="flex items-center bg-[#121215] border border-[#27272a] rounded-lg p-1">
+                <button
+                  type="button"
+                  onClick={() => setActiveLangTab('vi')}
+                  className={`px-3 py-1 text-xs font-semibold rounded ${
+                    activeLangTab === 'vi' ? 'bg-[#f27d26] text-white' : 'text-neutral-400 hover:text-white'
+                  }`}
+                >
+                  🇻🇳 Tiếng Việt
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveLangTab('en')}
+                  className={`px-3 py-1 text-xs font-semibold rounded ${
+                    activeLangTab === 'en' ? 'bg-[#f27d26] text-white' : 'text-neutral-400 hover:text-white'
+                  }`}
+                >
+                  🇬🇧 English
+                </button>
+              </div>
 
               <button
                 type="submit"
                 disabled={saving}
-                className="px-5 py-1.5 bg-[#f27d26] hover:bg-[#d96716] text-white rounded-lg text-xs font-semibold flex items-center gap-2 shadow-md transition-colors cursor-pointer"
+                className="px-5 py-2 bg-[#f27d26] hover:bg-[#d96716] text-white font-semibold text-xs rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
               >
                 <Save className="w-4 h-4" />
                 <span>{saving ? 'Đang lưu...' : 'Lưu dự án'}</span>
@@ -289,111 +352,69 @@ export const AdminProjects: React.FC<AdminProjectsProps> = ({ projects = [], ref
           </div>
 
           {error && (
-            <div className="p-4 bg-red-950/40 border border-red-800 text-red-200 text-xs rounded-xl flex items-center justify-between">
-              <span>{error}</span>
-              <button type="button" onClick={() => setError(null)}>
-                <X className="w-4 h-4" />
-              </button>
+            <div className="p-3 bg-red-950/80 border border-red-800 text-red-300 text-xs rounded-lg">
+              {error}
             </div>
           )}
 
+          {/* Form Grid Layout */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            {/* Left 8 Cols: Main Project Info & Block-based Case Study Content */}
+            
+            {/* Left 8 Cols: Main Details, Gallery & Content Blocks */}
             <div className="lg:col-span-8 space-y-6">
               
-              {/* Primary Info Card */}
-              <div className="bg-[#18181b] border border-[#27272a] rounded-xl p-5 sm:p-6 space-y-5">
-                <div className="flex items-center justify-between border-b border-[#27272a] pb-3">
-                  <div className="flex items-center gap-2">
-                    <Building2 className="w-4 h-4 text-[#f27d26]" />
-                    <span className="text-xs font-bold text-white uppercase tracking-wider">
-                      Thông tin nhận diện dự án
-                    </span>
-                  </div>
+              {/* Basic Meta Card */}
+              <div className="bg-[#18181b] border border-[#27272a] rounded-xl p-5 sm:p-6 space-y-4">
+                <span className="text-xs font-bold text-white uppercase tracking-wider block border-b border-[#27272a] pb-2">
+                  Thông tin nhận diện dự án ({activeLangTab.toUpperCase()})
+                </span>
 
-                  {/* Language switcher */}
-                  <div className="flex items-center gap-1 bg-[#121215] p-1 rounded-lg border border-[#27272a]">
-                    <button
-                      type="button"
-                      onClick={() => setActiveLangTab('vi')}
-                      className={`px-2.5 py-0.5 rounded text-[11px] font-medium transition-colors ${
-                        activeLangTab === 'vi' ? 'bg-[#f27d26] text-white' : 'text-neutral-400 hover:text-white'
-                      }`}
-                    >
-                      Tiếng Việt
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setActiveLangTab('en')}
-                      className={`px-2.5 py-0.5 rounded text-[11px] font-medium transition-colors ${
-                        activeLangTab === 'en' ? 'bg-[#f27d26] text-white' : 'text-neutral-400 hover:text-white'
-                      }`}
-                    >
-                      English
-                    </button>
-                  </div>
-                </div>
-
-                {/* Name */}
-                <div>
-                  <label className="block text-xs font-medium text-neutral-300 mb-1.5">
-                    Tên dự án ({activeLangTab.toUpperCase()}) <span className="text-red-400">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={activeLangTab === 'vi' ? editingProject.name.vi : editingProject.name.en}
-                    onChange={(e) => {
-                      const newName = {
-                        ...editingProject.name,
-                        [activeLangTab]: e.target.value
-                      };
-                      const updates: any = { name: newName };
-                      if (activeLangTab === 'vi' && isCreating) {
-                        updates.slug = slugify(e.target.value);
-                      }
-                      setEditingProject({ ...editingProject, ...updates });
-                    }}
-                    placeholder={activeLangTab === 'vi' ? 'VD: THE ONE WORLD (BÌNH DƯƠNG)' : 'Project title in English...'}
-                    className="w-full bg-[#121215] border border-[#3f3f46] rounded-lg px-3.5 py-2 text-sm font-semibold text-white focus:outline-none focus:border-[#f27d26]"
-                  />
-                </div>
-
-                {/* Slug */}
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-xs font-medium text-neutral-300">
-                      Đường dẫn tĩnh (Slug URL) <span className="text-red-400">*</span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Name */}
+                  <div>
+                    <label className="block text-xs font-medium text-neutral-300 mb-1">
+                      Tên dự án ({activeLangTab.toUpperCase()}) <span className="text-red-400">*</span>
                     </label>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (editingProject.name.vi) {
-                          setEditingProject({ ...editingProject, slug: slugify(editingProject.name.vi) });
-                        }
+                    <input
+                      type="text"
+                      required
+                      value={activeLangTab === 'vi' ? editingProject.name.vi : editingProject.name.en}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setEditingProject({
+                          ...editingProject,
+                          name: {
+                            ...editingProject.name,
+                            [activeLangTab]: val
+                          },
+                          slug: isCreating && activeLangTab === 'vi' ? slugify(val) : editingProject.slug
+                        });
                       }}
-                      className="text-[11px] text-[#f27d26] hover:underline"
-                    >
-                      Tự động tạo từ tên
-                    </button>
+                      placeholder="VD: Sân bay Long Thành"
+                      className="w-full bg-[#121215] border border-[#3f3f46] rounded-lg px-3.5 py-2 text-xs text-white focus:outline-none focus:border-[#f27d26]"
+                    />
                   </div>
-                  <div className="flex items-center bg-[#121215] border border-[#3f3f46] rounded-lg px-3 py-2 text-xs font-mono text-neutral-400">
-                    <span className="text-neutral-500 mr-1">/projects/</span>
+
+                  {/* Slug */}
+                  <div>
+                    <label className="block text-xs font-medium text-neutral-300 mb-1">
+                      Slug đường dẫn <span className="text-red-400">*</span>
+                    </label>
                     <input
                       type="text"
                       required
                       value={editingProject.slug}
                       onChange={(e) => setEditingProject({ ...editingProject, slug: slugify(e.target.value) })}
-                      className="flex-1 bg-transparent text-white focus:outline-none"
-                      placeholder="the-one-world"
+                      placeholder="san-bay-long-thanh"
+                      className="w-full bg-[#121215] border border-[#3f3f46] rounded-lg px-3.5 py-2 text-xs text-white font-mono focus:outline-none focus:border-[#f27d26]"
                     />
                   </div>
                 </div>
 
                 {/* Subtitle */}
                 <div>
-                  <label className="block text-xs font-medium text-neutral-300 mb-1.5">
-                    Phụ đề định vị ({activeLangTab.toUpperCase()})
+                  <label className="block text-xs font-medium text-neutral-300 mb-1">
+                    Phụ đề / Gói thầu ({activeLangTab.toUpperCase()})
                   </label>
                   <input
                     type="text"
@@ -407,14 +428,14 @@ export const AdminProjects: React.FC<AdminProjectsProps> = ({ projects = [], ref
                         }
                       });
                     }}
-                    placeholder="VD: Quần thể đô thị phức hợp biểu tượng gần 50ha"
+                    placeholder="VD: Nhà ga hàng hóa số 1 & Công trình phụ trợ"
                     className="w-full bg-[#121215] border border-[#3f3f46] rounded-lg px-3.5 py-2 text-xs text-white focus:outline-none focus:border-[#f27d26]"
                   />
                 </div>
 
                 {/* Scope */}
                 <div>
-                  <label className="block text-xs font-medium text-neutral-300 mb-1.5">
+                  <label className="block text-xs font-medium text-neutral-300 mb-1">
                     Phạm vi thực hiện của DEBRIQ ({activeLangTab.toUpperCase()})
                   </label>
                   <textarea
@@ -430,8 +451,314 @@ export const AdminProjects: React.FC<AdminProjectsProps> = ({ projects = [], ref
                       });
                     }}
                     placeholder="Mô tả phạm vi thực hiện..."
-                    className="w-full bg-[#121215] border border-[#3f3f46] rounded-lg p-3 text-xs text-neutral-200 focus:outline-none focus:border-[#f27d26] leading-relaxed"
+                    className="w-full bg-[#121215] border border-[#3f3f46] rounded-lg p-3 text-xs text-neutral-200 focus:outline-none focus:border-[#f27d26] leading-relaxed font-sans"
                   />
+                </div>
+              </div>
+
+              {/* TECHNICAL DRAWING & BLUEPRINT SECTION (USER CUSTOMIZABLE) */}
+              <div className="bg-[#18181b] border border-[#27272a] rounded-xl p-5 sm:p-6 space-y-4">
+                <div className="border-b border-[#27272a] pb-3 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-[#f27d26]" />
+                    <span className="text-xs font-bold text-white uppercase tracking-wider">
+                      Bản vẽ kỹ thuật & Sơ đồ Shopdrawing nổi bật
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-neutral-400 font-mono">
+                    HIỂN THỊ CỘT PHẢI CHI TIẾT DỰ ÁN
+                  </span>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-medium text-neutral-300 mb-2">
+                      Loại hình hiển thị bản vẽ:
+                    </label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <label className={`p-3 border rounded-lg flex items-center gap-3 cursor-pointer transition-colors ${
+                        editingProject.drawingType !== 'custom_image' 
+                          ? 'border-[#f27d26] bg-[#f27d26]/10 text-white' 
+                          : 'border-[#333] bg-[#121215] text-[#888]'
+                      }`}>
+                        <input
+                          type="radio"
+                          name="drawingType"
+                          checked={editingProject.drawingType !== 'custom_image'}
+                          onChange={() => setEditingProject({ ...editingProject, drawingType: 'vector' })}
+                          className="sr-only"
+                        />
+                        <div className="w-3.5 h-3.5 rounded-full border border-current flex items-center justify-center">
+                          {editingProject.drawingType !== 'custom_image' && <div className="w-2 h-2 rounded-full bg-[#f27d26]" />}
+                        </div>
+                        <div>
+                          <span className="font-bold text-xs block">Sơ đồ Vector CAD tương tác mặc định</span>
+                          <span className="text-[10px] text-[#777]">Tự động tạo vector nút dầm cột, hoàn thiện hoặc BIM</span>
+                        </div>
+                      </label>
+
+                      <label className={`p-3 border rounded-lg flex items-center gap-3 cursor-pointer transition-colors ${
+                        editingProject.drawingType === 'custom_image' 
+                          ? 'border-[#f27d26] bg-[#f27d26]/10 text-white' 
+                          : 'border-[#333] bg-[#121215] text-[#888]'
+                      }`}>
+                        <input
+                          type="radio"
+                          name="drawingType"
+                          checked={editingProject.drawingType === 'custom_image'}
+                          onChange={() => setEditingProject({ ...editingProject, drawingType: 'custom_image' })}
+                          className="sr-only"
+                        />
+                        <div className="w-3.5 h-3.5 rounded-full border border-current flex items-center justify-center">
+                          {editingProject.drawingType === 'custom_image' && <div className="w-2 h-2 rounded-full bg-[#f27d26]" />}
+                        </div>
+                        <div>
+                          <span className="font-bold text-xs block">Chèn hình ảnh bản vẽ riêng</span>
+                          <span className="text-[10px] text-[#777]">Upload hoặc chọn ảnh bản vẽ Shopdrawing/Blueprint</span>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+
+                  {editingProject.drawingType === 'custom_image' && (
+                    <div className="p-4 bg-[#121215] border border-[#333] rounded-lg space-y-3">
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={editingProject.drawingImageUrl || ''}
+                          onChange={(e) => setEditingProject({ ...editingProject, drawingImageUrl: e.target.value })}
+                          placeholder="https://... hoặc /uploads/ban-ve-mat-bang.jpg"
+                          className="flex-1 bg-[#18181b] border border-[#444] rounded px-3 py-2 text-xs text-white"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setActiveMediaTarget('drawing');
+                            setMediaPickerOpen(true);
+                          }}
+                          className="px-3 bg-[#2A2A2E] hover:bg-[#38383E] text-white text-xs font-semibold rounded border border-[#444] flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <Upload className="w-3.5 h-3.5 text-[#f27d26]" />
+                          <span>Chọn ảnh</span>
+                        </button>
+                      </div>
+
+                      {editingProject.drawingImageUrl && (
+                        <div className="aspect-video max-h-48 bg-[#000] border border-[#333] rounded overflow-hidden flex items-center justify-center">
+                          <img src={editingProject.drawingImageUrl} alt="Drawing Preview" className="max-h-full object-contain" />
+                        </div>
+                      )}
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <input
+                          type="text"
+                          value={editingProject.drawingCaption?.vi || ''}
+                          onChange={(e) => setEditingProject({
+                            ...editingProject,
+                            drawingCaption: {
+                              vi: e.target.value,
+                              en: editingProject.drawingCaption?.en || e.target.value
+                            }
+                          })}
+                          placeholder="Chú thích bản vẽ (Tiếng Việt)"
+                          className="bg-[#18181b] border border-[#444] rounded p-2 text-xs text-white"
+                        />
+                        <input
+                          type="text"
+                          value={editingProject.drawingCaption?.en || ''}
+                          onChange={(e) => setEditingProject({
+                            ...editingProject,
+                            drawingCaption: {
+                              vi: editingProject.drawingCaption?.vi || '',
+                              en: e.target.value
+                            }
+                          })}
+                          placeholder="Drawing Caption (English)"
+                          className="bg-[#18181b] border border-[#444] rounded p-2 text-xs text-white"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* PROJECT GALLERY & DRAWINGS MANAGER (USER REQUESTED FULL CRUD) */}
+              <div className="bg-[#18181b] border border-[#27272a] rounded-xl p-5 sm:p-6 space-y-5">
+                <div className="border-b border-[#27272a] pb-3 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Layers className="w-4 h-4 text-[#f27d26]" />
+                    <span className="text-xs font-bold text-white uppercase tracking-wider">
+                      Hồ sơ hình ảnh & bản vẽ (Gallery Archive) — ({editingProject.gallery?.length || 0} mục)
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-neutral-400 font-mono">
+                    PHỐI CẢNH • HIỆN TRƯỜNG • BẢN VẼ • HÌNH ẢNH
+                  </span>
+                </div>
+
+                {/* Add New Gallery Item Box */}
+                <div className="bg-[#121215] border border-[#333] p-4 rounded-lg space-y-3">
+                  <span className="text-xs font-bold text-[#f27d26] uppercase flex items-center gap-1.5">
+                    <Plus className="w-3.5 h-3.5" /> THÊM MỤC HÌNH ẢNH / BẢN VẼ MỚI VÀO HỒ SƠ
+                  </span>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                    {/* Category Type */}
+                    <div className="sm:col-span-4">
+                      <label className="block text-[11px] text-[#AAA] mb-1">Phân loại danh mục</label>
+                      <select
+                        value={newGalleryItem.type}
+                        onChange={(e) => setNewGalleryItem({ ...newGalleryItem, type: e.target.value })}
+                        className="w-full bg-[#18181b] border border-[#444] rounded p-2 text-xs text-white"
+                      >
+                        <option value="drawing">📐 Bản vẽ Shopdrawing (Drawing)</option>
+                        <option value="rendering">🏢 Phối cảnh 3D (Rendering)</option>
+                        <option value="site_photo">🏗️ Ảnh hiện trường (Site Photo)</option>
+                        <option value="photo">📷 Hình ảnh thực tế (General Photo)</option>
+                      </select>
+                    </div>
+
+                    {/* URL & Media Picker */}
+                    <div className="sm:col-span-8">
+                      <label className="block text-[11px] text-[#AAA] mb-1">Đường dẫn hình ảnh (URL)</label>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={newGalleryItem.url}
+                          onChange={(e) => setNewGalleryItem({ ...newGalleryItem, url: e.target.value })}
+                          placeholder="https://... hoặc /uploads/hinh-anh.jpg"
+                          className="flex-1 bg-[#18181b] border border-[#444] rounded px-3 py-2 text-xs text-white"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setActiveMediaTarget('galleryNew');
+                            setMediaPickerOpen(true);
+                          }}
+                          className="px-3 bg-[#2A2A2E] hover:bg-[#38383E] text-white text-xs font-semibold rounded border border-[#444] flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <Upload className="w-3.5 h-3.5 text-[#f27d26]" />
+                          <span>Chọn ảnh</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <input
+                      type="text"
+                      value={newGalleryItem.captionVi}
+                      onChange={(e) => setNewGalleryItem({ ...newGalleryItem, captionVi: e.target.value })}
+                      placeholder="Chú thích ảnh (Tiếng Việt)"
+                      className="bg-[#18181b] border border-[#444] rounded p-2 text-xs text-white"
+                    />
+                    <input
+                      type="text"
+                      value={newGalleryItem.captionEn}
+                      onChange={(e) => setNewGalleryItem({ ...newGalleryItem, captionEn: e.target.value })}
+                      placeholder="Caption (English)"
+                      className="bg-[#18181b] border border-[#444] rounded p-2 text-xs text-white"
+                    />
+                  </div>
+
+                  <div className="flex justify-end pt-1">
+                    <button
+                      type="button"
+                      disabled={!newGalleryItem.url}
+                      onClick={handleAddGalleryItem}
+                      className="bg-[#f27d26] hover:bg-[#d96716] disabled:opacity-40 text-white px-4 py-1.5 text-xs font-semibold rounded inline-flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Thêm vào bộ sưu tập</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Existing Gallery Items List */}
+                <div className="space-y-3">
+                  <span className="text-[11px] text-[#AAA] uppercase font-mono block">
+                    DANH SÁCH HÌNH ẢNH ĐANG CÓ TRONG HỒ SƠ:
+                  </span>
+
+                  {(!editingProject.gallery || editingProject.gallery.length === 0) ? (
+                    <div className="p-4 bg-[#121215] border border-dashed border-[#333] rounded text-center text-xs text-[#777]">
+                      Chưa có hình ảnh hoặc bản vẽ nào trong hồ sơ. Hãy thêm mục mới ở trên.
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {editingProject.gallery.map((img, idx) => (
+                        <div key={img.id || idx} className="bg-[#121215] border border-[#333] rounded-lg overflow-hidden flex flex-col justify-between">
+                          <div className="relative aspect-video bg-[#000] overflow-hidden">
+                            <img src={img.url} alt="" className="w-full h-full object-cover" />
+                            <span className="absolute top-2 left-2 bg-[#18181b]/90 border border-[#444] text-[9px] font-mono uppercase px-2 py-0.5 text-[#F27D26] rounded">
+                              {img.type === 'drawing' ? 'Bản vẽ' : img.type === 'rendering' ? 'Phối cảnh' : img.type === 'site_photo' ? 'Hiện trường' : 'Hình ảnh'}
+                            </span>
+                          </div>
+
+                          <div className="p-3 space-y-2">
+                            <div className="space-y-1">
+                              <input
+                                type="text"
+                                value={typeof img.caption === 'object' ? img.caption.vi : (img.caption || '')}
+                                onChange={(e) => {
+                                  const updated = [...(editingProject.gallery || [])];
+                                  const currentCaption = typeof updated[idx].caption === 'object' ? updated[idx].caption : { vi: '', en: '' };
+                                  updated[idx].caption = {
+                                    vi: e.target.value,
+                                    en: (currentCaption as any).en || e.target.value
+                                  };
+                                  setEditingProject({ ...editingProject, gallery: updated });
+                                }}
+                                placeholder="Chú thích VI"
+                                className="w-full bg-[#18181b] border border-[#444] p-1.5 text-xs text-white rounded"
+                              />
+                              <input
+                                type="text"
+                                value={typeof img.caption === 'object' ? img.caption.en : ''}
+                                onChange={(e) => {
+                                  const updated = [...(editingProject.gallery || [])];
+                                  const currentCaption = typeof updated[idx].caption === 'object' ? updated[idx].caption : { vi: '', en: '' };
+                                  updated[idx].caption = {
+                                    vi: (currentCaption as any).vi || '',
+                                    en: e.target.value
+                                  };
+                                  setEditingProject({ ...editingProject, gallery: updated });
+                                }}
+                                placeholder="Caption EN"
+                                className="w-full bg-[#18181b] border border-[#444] p-1.5 text-xs text-white rounded"
+                              />
+                            </div>
+
+                            <div className="flex items-center justify-between border-t border-[#2A2A2A] pt-2">
+                              <select
+                                value={img.type}
+                                onChange={(e) => {
+                                  const updated = [...(editingProject.gallery || [])];
+                                  updated[idx].type = e.target.value;
+                                  setEditingProject({ ...editingProject, gallery: updated });
+                                }}
+                                className="bg-[#18181b] border border-[#444] text-[11px] text-[#AAA] p-1 rounded"
+                              >
+                                <option value="drawing">Bản vẽ (Drawing)</option>
+                                <option value="rendering">Phối cảnh (Rendering)</option>
+                                <option value="site_photo">Hiện trường (Site Photo)</option>
+                                <option value="photo">Hình ảnh (Photo)</option>
+                              </select>
+
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveGalleryItem(idx)}
+                                className="p-1 text-red-400 hover:text-red-300 hover:bg-red-950/50 rounded cursor-pointer transition-colors"
+                                title="Xóa ảnh"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -632,8 +959,8 @@ export const AdminProjects: React.FC<AdminProjectsProps> = ({ projects = [], ref
           {/* Top Bar */}
           <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-[#18181b] p-4 rounded-xl border border-[#27272a]">
             <div>
-              <h2 className="text-base font-semibold text-white">Quản lý Hồ sơ Dự án (Case Studies)</h2>
-              <p className="text-xs text-neutral-400">Danh mục dự án thực tế và hồ sơ kỹ thuật hiển thị trên website</p>
+              <h2 className="text-base font-semibold text-white">Quản lý Hồ sơ Dự án ({projects.length})</h2>
+              <p className="text-xs text-neutral-400">Danh mục dự án thực tế, hồ sơ hình ảnh và bản vẽ Shopdrawing hiển thị trên website</p>
             </div>
 
             <button
@@ -668,7 +995,7 @@ export const AdminProjects: React.FC<AdminProjectsProps> = ({ projects = [], ref
                     <th className="py-3 px-4">Dự án</th>
                     <th className="py-3 px-4">Khách hàng trực tiếp</th>
                     <th className="py-3 px-4">Thời gian</th>
-                    <th className="py-3 px-4">Khối nội dung</th>
+                    <th className="py-3 px-4">Hồ sơ hình ảnh & bản vẽ</th>
                     <th className="py-3 px-4">Trạng thái</th>
                     <th className="py-3 px-4 text-right">Thao tác</th>
                   </tr>
@@ -702,31 +1029,35 @@ export const AdminProjects: React.FC<AdminProjectsProps> = ({ projects = [], ref
                         {p.period}
                       </td>
 
-                      <td className="py-3.5 px-4 text-neutral-400">
-                        {p.contentBlocks?.length || 0} khối
+                      <td className="py-3.5 px-4">
+                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-[#27272a] text-neutral-300 rounded text-[11px]">
+                          <ImageIcon className="w-3 h-3 text-[#f27d26]" />
+                          <span>{p.gallery?.length || 0} ảnh & bản vẽ</span>
+                        </span>
                       </td>
 
                       <td className="py-3.5 px-4">
                         <div className="flex items-center gap-2">
                           <button
+                            type="button"
                             onClick={() => handleTogglePublish(p)}
-                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium cursor-pointer transition-colors ${
-                              p.published
-                                ? 'text-emerald-400 bg-emerald-950/40'
-                                : 'text-neutral-500 bg-[#27272a]'
+                            className={`p-1 rounded cursor-pointer ${
+                              p.published ? 'text-emerald-400 hover:bg-emerald-950/50' : 'text-neutral-500 hover:bg-neutral-800'
                             }`}
+                            title={p.published ? 'Đang công khai (Bấm để ẩn)' : 'Đang ẩn (Bấm để hiện)'}
                           >
-                            {p.published ? 'Công khai' : 'Nháp'}
+                            {p.published ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                           </button>
 
                           <button
+                            type="button"
                             onClick={() => handleToggleFeatured(p)}
-                            className={`p-1 rounded cursor-pointer transition-colors ${
-                              p.featured ? 'text-[#f27d26]' : 'text-neutral-600 hover:text-neutral-400'
+                            className={`p-1 rounded cursor-pointer ${
+                              p.featured ? 'text-[#f27d26] hover:bg-[#f27d26]/20' : 'text-neutral-500 hover:bg-neutral-800'
                             }`}
-                            title="Đánh dấu dự án nổi bật"
+                            title={p.featured ? 'Dự án tiêu biểu (Bấm để tắt)' : 'Đặt làm dự án tiêu biểu'}
                           >
-                            <Star className="w-3.5 h-3.5" fill={p.featured ? '#f27d26' : 'none'} />
+                            <Star className="w-4 h-4 fill-current" />
                           </button>
                         </div>
                       </td>
@@ -734,33 +1065,24 @@ export const AdminProjects: React.FC<AdminProjectsProps> = ({ projects = [], ref
                       <td className="py-3.5 px-4 text-right">
                         <div className="flex items-center justify-end gap-1.5">
                           <button
-                            onClick={() => {
-                              setEditingProject(p);
-                              setPreviewOpen(true);
-                            }}
-                            className="p-1.5 text-neutral-400 hover:text-white rounded hover:bg-[#27272a] transition-colors cursor-pointer"
-                            title="Xem trước"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </button>
-                          <button
                             onClick={() => handleEdit(p)}
-                            className="p-1.5 text-neutral-400 hover:text-white rounded hover:bg-[#27272a] transition-colors cursor-pointer"
+                            className="p-1.5 hover:bg-[#27272a] text-neutral-300 hover:text-white rounded transition-colors cursor-pointer"
                             title="Chỉnh sửa dự án"
                           >
                             <Edit3 className="w-4 h-4" />
                           </button>
+
                           {deletingProjectId === p.id ? (
                             <div className="flex items-center gap-1">
                               <button
                                 onClick={() => handleDelete(p.id, p.name.vi)}
-                                className="px-2 py-0.5 bg-red-600 hover:bg-red-700 text-white text-[10px] font-bold rounded cursor-pointer"
+                                className="px-2 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-[10px] font-bold cursor-pointer"
                               >
                                 Xóa?
                               </button>
                               <button
                                 onClick={() => setDeletingProjectId(null)}
-                                className="px-1.5 py-0.5 bg-[#333] hover:bg-[#444] text-[#AAA] text-[10px] rounded cursor-pointer"
+                                className="px-1.5 py-1 bg-[#27272a] text-neutral-300 rounded text-[10px] cursor-pointer"
                               >
                                 Hủy
                               </button>
@@ -768,7 +1090,7 @@ export const AdminProjects: React.FC<AdminProjectsProps> = ({ projects = [], ref
                           ) : (
                             <button
                               onClick={() => setDeletingProjectId(p.id)}
-                              className="p-1.5 text-red-400 hover:text-red-300 rounded hover:bg-red-950/30 transition-colors cursor-pointer"
+                              className="p-1.5 hover:bg-red-950/40 text-neutral-400 hover:text-red-400 rounded transition-colors cursor-pointer"
                               title="Xóa dự án"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -784,6 +1106,20 @@ export const AdminProjects: React.FC<AdminProjectsProps> = ({ projects = [], ref
           </div>
         </div>
       )}
+
+      {/* Media Picker Modal */}
+      <MediaPickerModal
+        isOpen={mediaPickerOpen}
+        onClose={() => {
+          setMediaPickerOpen(false);
+          setActiveMediaTarget(null);
+        }}
+        onSelect={handleMediaSelect}
+        token={token}
+        title="Chọn hình ảnh dự án từ Media"
+        defaultCategory="projects"
+      />
+
     </div>
   );
 };
