@@ -591,10 +591,11 @@ async function startServer() {
         }
 
         let html = fs.readFileSync(indexHtmlPath, 'utf-8');
-        const settings = dbSettings.get();
+        const settings = dbSettings.get() || ({} as any);
         const host = req.get('host') || 'debriq.vn';
-        const protocol = req.protocol === 'https' || req.get('x-forwarded-proto') === 'https' ? 'https' : 'http';
-        const fullUrl = `${protocol}://${host}${req.originalUrl}`;
+        const protocol = (req.headers['x-forwarded-proto'] as string) || req.protocol || 'https';
+        const urlPath = req.path || req.originalUrl || '/';
+        const fullUrl = `${protocol}://${host}${urlPath}`;
 
         let ogTitle = settings.ogTitle || `${settings.displayName || 'DEBRIQ'} — Kỹ thuật thi công & Shopdrawing`;
         let ogDesc = settings.ogDescription || settings.tagline || 'Giải pháp Shopdrawing kết cấu, hoàn thiện, BIM/Revit và biện pháp thi công chuẩn xác.';
@@ -602,26 +603,26 @@ async function startServer() {
         let favicon = settings.faviconUrl || '/favicon.svg';
 
         // Check if route is a Project Detail
-        if (req.originalUrl.startsWith('/projects/') && req.originalUrl !== '/projects/') {
-          const slug = req.originalUrl.replace('/projects/', '').split('?')[0].split('/')[0];
+        if (urlPath.startsWith('/projects/') && urlPath !== '/projects/') {
+          const slug = urlPath.replace('/projects/', '').split('/')[0].split('?')[0];
           const project = dbProjects.getBySlug(slug);
           if (project) {
             ogTitle = `${typeof project.name === 'object' ? project.name.vi : project.name} — DEBRIQ ENGINEERING`;
             ogDesc = typeof project.scope === 'object' ? project.scope.vi : (project.shortSummary?.vi || ogDesc);
             if (project.heroImage) {
-              ogImage = project.heroImage.startsWith('http') ? project.heroImage : `${protocol}://${host}${project.heroImage}`;
+              ogImage = project.heroImage.startsWith('http') ? project.heroImage : `${protocol}://${host}${project.heroImage.startsWith('/') ? '' : '/'}${project.heroImage}`;
             }
           }
         }
         // Check if route is an Article Detail
-        else if ((req.originalUrl.startsWith('/insights/') || req.originalUrl.startsWith('/articles/')) && req.originalUrl !== '/insights/') {
-          const slug = req.originalUrl.replace('/insights/', '').replace('/articles/', '').split('?')[0].split('/')[0];
+        else if ((urlPath.startsWith('/insights/') || urlPath.startsWith('/articles/')) && urlPath !== '/insights/') {
+          const slug = urlPath.replace('/insights/', '').replace('/articles/', '').split('/')[0].split('?')[0];
           const article = dbArticles.getBySlug(slug);
           if (article) {
             ogTitle = `${typeof article.title === 'object' ? article.title.vi : article.title} — DEBRIQ`;
             ogDesc = typeof article.excerpt === 'object' ? article.excerpt.vi : ogDesc;
             if (article.coverImage) {
-              ogImage = article.coverImage.startsWith('http') ? article.coverImage : `${protocol}://${host}${article.coverImage}`;
+              ogImage = article.coverImage.startsWith('http') ? article.coverImage : `${protocol}://${host}${article.coverImage.startsWith('/') ? '' : '/'}${article.coverImage}`;
             }
           }
         }
@@ -631,7 +632,12 @@ async function startServer() {
           ogImage = `${protocol}://${host}${ogImage.startsWith('/') ? '' : '/'}${ogImage}`;
         }
 
-        // Inject dynamic tags into HTML head
+        // Clean out default tags from index.html
+        html = html.replace(/<title>.*?<\/title>/gi, '');
+        html = html.replace(/<meta\s+name=["']description["'][^>]*>/gi, '');
+        html = html.replace(/<meta\s+property=["']og:[^"']*["'][^>]*>/gi, '');
+        html = html.replace(/<meta\s+name=["']twitter:[^"']*["'][^>]*>/gi, '');
+
         const dynamicMeta = `
     <title>${ogTitle}</title>
     <link rel="icon" href="${favicon}" />
@@ -647,16 +653,11 @@ async function startServer() {
     <meta name="twitter:description" content="${ogDesc.replace(/"/g, '&quot;')}" />
     <meta name="twitter:image" content="${ogImage}" />`;
 
-        // Replace existing title and meta tags before injecting dynamic ones
-        html = html.replace(/<title>.*?<\/title>/i, '');
-        html = html.replace(/<meta\s+name=["']description["'][^>]*>/gi, '');
-        html = html.replace(/<meta\s+property=["']og:[^"']*["'][^>]*>/gi, '');
-        html = html.replace(/<meta\s+name=["']twitter:[^"']*["'][^>]*>/gi, '');
         html = html.replace('</head>', `${dynamicMeta}\n  </head>`);
-
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
         res.send(html);
-      } catch (err) {
+      } catch (err: any) {
+        console.error('[OG Meta Injection Error]', err);
         res.sendFile(indexHtmlPath);
       }
     });
