@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- Background with slight rounded corners -->
+  <rect width="64" height="64" rx="12" fill="#151515"/>
+  
+  <!-- Subtle architectural grid lines -->
+  <path d="M12 12H52V52H12V12Z" stroke="#2A2A2A" stroke-width="1.5" stroke-dasharray="2 2"/>
+  
+  <!-- Geometric 'D' Architectural Shape -->
+  <path d="M18 16H34C43.941 16 52 24.059 52 34C52 43.941 43.941 52 34 52H18V16Z" fill="#FFFFFF"/>
+  <path d="M26 24H34C39.523 24 44 28.477 44 34C44 39.523 39.523 44 34 44H26V24Z" fill="#151515"/>
+  
+  <!-- Engineering Technical Orange Mark -->
+  <rect x="46" y="14" width="6" height="6" fill="#F27D26"/>
+</svg>
