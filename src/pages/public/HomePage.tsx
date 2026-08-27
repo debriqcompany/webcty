@@ -69,35 +69,6 @@ const TypewriterHeroTitle: React.FC<{ lang: 'vi' | 'en' }> = ({ lang }) => {
   );
 };
 
-// Animated Stat Counter Component
-const AnimatedStatCounter: React.FC<{ target: number; suffix?: string; delay?: number }> = ({
-  target,
-  suffix = '',
-  delay = 800
-}) => {
-  const [count, setCount] = React.useState(1);
-
-  React.useEffect(() => {
-    const timer = setTimeout(() => {
-      let current = 1;
-      const stepTime = Math.max(35, Math.floor(900 / target));
-      const interval = setInterval(() => {
-        current++;
-        setCount(current);
-        if (current >= target) {
-          clearInterval(interval);
-        }
-      }, stepTime);
-    }, delay);
-
-    return () => clearTimeout(timer);
-  }, [target, delay]);
-
-  return (
-    <span>{count}{suffix}</span>
-  );
-};
-
 interface HomePageProps {
   navigate: (path: string) => void;
   openQuoteModal: (service?: string, project?: string) => void;
@@ -154,24 +125,24 @@ export const HomePage: React.FC<HomePageProps> = ({ navigate, openQuoteModal }) 
                 </button>
               </div>
 
-              {/* Scale Metrics Bar with Animated Count-up Numbers */}
+              {/* Scale Metrics Bar */}
               <div className="grid grid-cols-3 gap-6 pt-8 border-t border-[#D9D8D3]">
                 <div>
                   <p className="type-meta-label mb-1">RESOURCES</p>
                   <p className="text-base sm:text-lg font-semibold text-[#151515] font-sans">
-                    <AnimatedStatCounter target={5} suffix="+ Kỹ sư" delay={800} />
+                    {lang === 'vi' ? '5+ Kỹ sư' : '5+ Engineers'}
                   </p>
                 </div>
                 <div>
                   <p className="type-meta-label mb-1">CAPACITY</p>
                   <p className="text-base sm:text-lg font-semibold text-[#151515] font-sans">
-                    <AnimatedStatCounter target={25} suffix="+ Cộng tác viên" delay={900} />
+                    {lang === 'vi' ? '25+ Cộng tác viên' : '25+ Network'}
                   </p>
                 </div>
                 <div>
                   <p className="type-meta-label mb-1">LANDMARKS</p>
                   <p className="text-base sm:text-lg font-semibold text-[#F27D26] font-sans">
-                    <AnimatedStatCounter target={9} suffix="+ Dự án lớn" delay={1000} />
+                    {lang === 'vi' ? '9+ Dự án lớn' : '9+ Projects'}
                   </p>
                 </div>
               </div>
