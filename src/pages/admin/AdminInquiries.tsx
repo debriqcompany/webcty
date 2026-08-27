@@ -38,7 +38,8 @@ export const AdminInquiries: React.FC<AdminInquiriesProps> = ({ token }) => {
       });
       if (res.ok) {
         const data = await res.json();
-        setInquiries(data.inquiries || []);
+        const list = Array.isArray(data) ? data : (data.inquiries || []);
+        setInquiries(list);
       }
     } catch (err) {
       console.error('Error fetching inquiries:', err);
@@ -69,6 +70,9 @@ export const AdminInquiries: React.FC<AdminInquiriesProps> = ({ token }) => {
 
   const filtered = inquiries.filter(item => {
     if (filterType === 'all') return true;
+    if (filterType === 'candidate') return item.type === 'candidate' || item.type === 'engineer_network';
+    if (filterType === 'quote') return item.type === 'quote';
+    if (filterType === 'contact') return item.type === 'contact' || item.type === 'general';
     return item.type === filterType;
   });
 

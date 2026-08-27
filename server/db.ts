@@ -4,6 +4,7 @@ import { Project, ServiceItem, Partner, PageContent, CompanySettings, InquirySub
 import { initialCompanySettings, initialServices, initialProjects, initialPartners, initialPages } from './seedData';
 import { hashPassword } from './auth';
 import { DATA_DIR, DATABASE_FILENAME, UPLOAD_DIR } from './config';
+import { firestore } from './firebase';
 
 export interface DatabaseSchema {
   projects: Project[];
@@ -29,7 +30,7 @@ if (!fs.existsSync(UPLOADS_DIR)) {
   fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 }
 
-// In-memory cache synced to JSON filesystem
+// In-memory cache synced to JSON filesystem & Firestore
 let db: DatabaseSchema = {
   projects: [],
   articles: [],
@@ -42,8 +43,10 @@ let db: DatabaseSchema = {
   users: []
 };
 
+let firestoreConnected = false;
+
 /**
- * Persist database state to disk safely
+ * Persist database state to disk safely as backup
  */
 export function saveDb(): void {
   try {
@@ -57,11 +60,116 @@ export function saveDb(): void {
 }
 
 /**
+ * Async Helper to write to Firestore with error resilience
+ */
+async function syncToFirestore(collection: string, docId: string, data: any) {
+  try {
+    if (!firestore) return;
+    await firestore.collection(collection).doc(docId).set(data, { merge: true });
+  } catch (err: any) {
+    console.warn(`[Firestore Sync Warning] Failed to sync doc ${docId} in ${collection}:`, err.message || err);
+  }
+}
+
+/**
+ * Async Helper to delete from Firestore
+ */
+async function deleteFromFirestore(collection: string, docId: string) {
+  try {
+    if (!firestore) return;
+    await firestore.collection(collection).doc(docId).delete();
+  } catch (err: any) {
+    console.warn(`[Firestore Delete Warning] Failed to delete doc ${docId} in ${collection}:`, err.message || err);
+  }
+}
+
+/**
+ * Migrate all local data to Firestore if Firestore collections are empty
+ */
+async function migrateToFirestoreIfEmpty() {
+  try {
+    const projSnapshot = await firestore.collection('projects').limit(1).get();
+    if (projSnapshot.empty) {
+      console.log('[Firestore] Firestore collections empty. Migrating local database to Firestore...');
+      
+      // Batch migrate projects
+      for (const p of db.projects || []) {
+        await firestore.collection('projects').doc(p.id).set(p);
+      }
+      // Batch migrate articles
+      for (const a of db.articles || []) {
+        await firestore.collection('articles').doc(a.id).set(a);
+      }
+      // Batch migrate services
+      for (const s of db.services || []) {
+        await firestore.collection('services').doc(s.id).set(s);
+      }
+      // Batch migrate partners
+      for (const pt of db.partners || []) {
+        await firestore.collection('partners').doc(pt.id).set(pt);
+      }
+      // Batch migrate pages
+      for (const [k, pg] of Object.entries(db.pages || {})) {
+        await firestore.collection('pages').doc(k).set(pg);
+      }
+      // Settings
+      if (db.settings) {
+        await firestore.collection('settings').doc('company').set(db.settings);
+      }
+      // Users
+      for (const u of db.users || []) {
+        await firestore.collection('users').doc(u.id).set(u);
+      }
+      // Inquiries
+      for (const inq of db.inquiries || []) {
+        await firestore.collection('inquiries').doc(inq.id).set(inq);
+      }
+      console.log('[Firestore] Migration to Cloud Firestore completed successfully!');
+    } else {
+      console.log('[Firestore] Cloud Firestore already populated. Hydrating cache from Firestore...');
+      // Pull latest from Firestore
+      const projSnap = await firestore.collection('projects').get();
+      if (!projSnap.empty) {
+        db.projects = projSnap.docs.map(d => d.data() as Project);
+      }
+      const artSnap = await firestore.collection('articles').get();
+      if (!artSnap.empty) {
+        db.articles = artSnap.docs.map(d => d.data() as Article);
+      }
+      const srvSnap = await firestore.collection('services').get();
+      if (!srvSnap.empty) {
+        db.services = srvSnap.docs.map(d => d.data() as ServiceItem);
+      }
+      const ptnSnap = await firestore.collection('partners').get();
+      if (!ptnSnap.empty) {
+        db.partners = ptnSnap.docs.map(d => d.data() as Partner);
+      }
+      const inqSnap = await firestore.collection('inquiries').get();
+      if (!inqSnap.empty) {
+        db.inquiries = inqSnap.docs.map(d => d.data() as InquirySubmission);
+      }
+      const settSnap = await firestore.collection('settings').doc('company').get();
+      if (settSnap.exists) {
+        db.settings = settSnap.data() as CompanySettings;
+      }
+      const usrSnap = await firestore.collection('users').get();
+      if (!usrSnap.empty) {
+        db.users = usrSnap.docs.map(d => d.data() as any);
+      }
+      saveDb();
+    }
+    firestoreConnected = true;
+  } catch (err: any) {
+    console.warn('[Firestore] Notice: Firestore sync operating in resilient mode:', err.message || err);
+  }
+}
+
+/**
  * Initialize Database on server startup
  */
 export function initDb(): void {
-  const adminEmail = (process.env.ADMIN_EMAIL || 'admin@debriq.vn').trim().toLowerCase();
-  const envAdminPass = process.env.ADMIN_PASSWORD;
+  const adminEmail = (process.env.ADMIN_EMAIL || 'debriqcompany@gmail.com').trim().toLowerCase();
+  const envAdminPass = process.env.ADMIN_PASSWORD || '123456789';
 
   if (fs.existsSync(DB_FILE)) {
     try {
@@ -74,12 +182,9 @@ export function initDb(): void {
       if (!db.services) db.services = [];
       if (!db.inquiries) db.inquiries = [];
       if (!db.pages) db.pages = {};
-      console.log(`[Database] Loaded existing database with ${db.projects?.length || 0} projects, ${db.partners?.length || 0} partners.`);
+      console.log(`[Database] Loaded local database with ${db.projects?.length || 0} projects, ${db.partners?.length || 0} partners.`);
     } catch (err) {
-      console.error('[Database Error] Failed to parse existing database file. Preserving backup and seeding fresh...', err);
-      try {
-        fs.copyFileSync(DB_FILE, `${DB_FILE}.corrupt.${Date.now()}`);
-      } catch {}
+      console.error('[Database Error] Failed to parse existing database file. Seeding fresh...', err);
       seedFresh(adminEmail, envAdminPass);
     }
   } else {
@@ -89,26 +194,25 @@ export function initDb(): void {
 
   // Ensure an admin user is present
   if (!db.users || db.users.length === 0) {
-    const initialPass = envAdminPass || (process.env.NODE_ENV !== 'production' ? 'debriq2025' : '');
-    if (!initialPass) {
-      console.warn('[ADMIN SECURITY ALERT] No ADMIN_PASSWORD provided in .env! Please set ADMIN_PASSWORD to allow login.');
-    }
-    
     db.users = [
       {
         id: 'admin-1',
         email: adminEmail,
-        passwordHash: initialPass ? hashPassword(initialPass) : '',
+        passwordHash: hashPassword(envAdminPass),
         name: 'DEBRIQ Technical Administrator'
       }
     ];
     saveDb();
   }
+
+  // Attempt Firestore sync & migration asynchronously
+  migrateToFirestoreIfEmpty().catch(err => {
+    console.warn('[Firestore Init] Working in fallback mode:', err.message);
+  });
 }
 
 function seedFresh(adminEmail: string, adminPass?: string) {
-  const initialPass = adminPass || (process.env.NODE_ENV !== 'production' ? 'debriq2025' : '');
-  
+  const initialPass = adminPass || '123456789';
   db = {
     projects: initialProjects,
     articles: [
@@ -129,7 +233,7 @@ function seedFresh(adminEmail: string, adminPass?: string) {
         },
         category: 'Kỹ thuật Shopdrawing',
         tags: ['Kết cấu', 'TCVN 5574:2018', 'Cốt thép'],
-        coverImage: '/assets/blueprint-placeholder.svg',
+        coverImage: '/placeholder-blueprint.svg',
         author: 'Ban Kỹ thuật DEBRIQ',
         publishedAt: '2026-02-15T08:00:00Z',
         featured: true,
@@ -161,27 +265,13 @@ function seedFresh(adminEmail: string, adminPass?: string) {
     partners: initialPartners,
     pages: initialPages,
     settings: initialCompanySettings,
-    inquiries: [
-      {
-        id: 'inq-sample-1',
-        type: 'quote',
-        fullName: 'Nguyễn Văn Hùng',
-        company: 'Tổng thầu Xây dựng Miền Nam',
-        email: 'hung.nguyen@example.com',
-        phone: '0912 345 678',
-        serviceInterest: 'Shopdrawing kết cấu & Biện pháp thi công',
-        projectScale: 'Cao tầng 3 hầm 28 tầng nổi',
-        message: 'Cần báo giá triển khai Shopdrawing kết cấu phần ngầm và thân cho dự án tại TP.HCM tiến độ gấp.',
-        status: 'reviewed',
-        createdAt: '2026-02-20T10:30:00Z'
-      }
-    ],
+    inquiries: [],
     media: [],
     users: [
       {
         id: 'admin-1',
         email: adminEmail,
-        passwordHash: initialPass ? hashPassword(initialPass) : '',
+        passwordHash: hashPassword(initialPass),
         name: 'DEBRIQ Technical Administrator'
       }
     ]
@@ -253,6 +343,7 @@ export const dbProjects = {
     if (!db.projects) db.projects = [];
     db.projects.push(newProject);
     saveDb();
+    syncToFirestore('projects', newProject.id, newProject);
     return newProject;
   },
   update: (id: string, data: Partial<Project>) => {
@@ -265,6 +356,7 @@ export const dbProjects = {
       updatedAt: new Date().toISOString()
     };
     saveDb();
+    syncToFirestore('projects', id, db.projects[idx]);
     return db.projects[idx];
   },
   delete: (id: string) => {
@@ -272,6 +364,7 @@ export const dbProjects = {
     const initialLen = db.projects.length;
     db.projects = db.projects.filter(p => p.id !== id);
     saveDb();
+    deleteFromFirestore('projects', id);
     return db.projects.length < initialLen;
   }
 };
@@ -325,6 +418,7 @@ export const dbArticles = {
     if (!db.articles) db.articles = [];
     db.articles.push(newArticle);
     saveDb();
+    syncToFirestore('articles', newArticle.id, newArticle);
     return newArticle;
   },
   update: (id: string, data: Partial<Article>) => {
@@ -337,6 +431,7 @@ export const dbArticles = {
       updatedAt: new Date().toISOString()
     };
     saveDb();
+    syncToFirestore('articles', id, db.articles[idx]);
     return db.articles[idx];
   },
   delete: (id: string) => {
@@ -344,6 +439,7 @@ export const dbArticles = {
     const initialLen = db.articles.length;
     db.articles = db.articles.filter(a => a.id !== id);
     saveDb();
+    deleteFromFirestore('articles', id);
     return db.articles.length < initialLen;
   }
 };
@@ -358,6 +454,29 @@ export const dbServices = {
   getById: (id: string) => {
     return db.services?.find(s => s.id === id);
   },
+  create: (data: Partial<ServiceItem>) => {
+    const newService: ServiceItem = {
+      id: data.id || `svc-${Date.now()}`,
+      slug: data.slug || `service-${Date.now()}`,
+      title: data.title || { vi: 'Dịch vụ mới', en: 'New Service' },
+      subtitle: data.subtitle,
+      shortDesc: data.shortDesc,
+      description: data.description || { vi: '', en: '' },
+      deliverables: data.deliverables || [],
+      methodologies: data.methodologies || [],
+      tools: data.tools || ['AutoCAD', 'Revit'],
+      toolsUsed: data.toolsUsed || ['AutoCAD', 'Revit'],
+      visualType: data.visualType || 'structural',
+      featured: data.featured !== undefined ? data.featured : true,
+      published: data.published !== undefined ? data.published : true,
+      sortOrder: data.sortOrder || (db.services?.length || 0) + 1
+    };
+    if (!db.services) db.services = [];
+    db.services.push(newService);
+    saveDb();
+    syncToFirestore('services', newService.id, newService);
+    return newService;
+  },
   update: (id: string, data: Partial<ServiceItem>) => {
     if (!db.services) return null;
     const idx = db.services.findIndex(s => s.id === id);
@@ -367,7 +486,16 @@ export const dbServices = {
       ...data
     };
     saveDb();
+    syncToFirestore('services', id, db.services[idx]);
     return db.services[idx];
+  },
+  delete: (id: string) => {
+    if (!db.services) return false;
+    const initialLen = db.services.length;
+    db.services = db.services.filter(s => s.id !== id);
+    saveDb();
+    deleteFromFirestore('services', id);
+    return db.services.length < initialLen;
   }
 };
 
@@ -405,6 +533,7 @@ export const dbPartners = {
     if (!db.partners) db.partners = [];
     db.partners.push(newPartner);
     saveDb();
+    syncToFirestore('partners', newPartner.id, newPartner);
     return newPartner;
   },
   update: (id: string, data: Partial<Partner>) => {
@@ -416,6 +545,7 @@ export const dbPartners = {
       ...data
     };
     saveDb();
+    syncToFirestore('partners', id, db.partners[idx]);
     return db.partners[idx];
   },
   reorder: (orderedIds: string[]) => {
@@ -425,6 +555,7 @@ export const dbPartners = {
       if (p) {
         p.sortOrder = index + 1;
         p.order = index + 1;
+        syncToFirestore('partners', id, p);
       }
     });
     saveDb();
@@ -434,6 +565,7 @@ export const dbPartners = {
     if (!db.partners) return false;
     db.partners = db.partners.filter(p => p.id !== id);
     saveDb();
+    deleteFromFirestore('partners', id);
     return true;
   }
 };
@@ -464,6 +596,7 @@ export const dbPages = {
       };
     }
     saveDb();
+    syncToFirestore('pages', key, db.pages[key]);
     return db.pages[key];
   }
 };
@@ -479,12 +612,13 @@ export const dbSettings = {
       ...data
     };
     saveDb();
+    syncToFirestore('settings', 'company', db.settings);
     return db.settings;
   }
 };
 
 /* =========================================================================
-   INQUIRIES / LEADS
+   INQUIRIES / LEADS (QUOTE & ENGINEER CANDIDATES)
    ========================================================================= */
 export const dbInquiries = {
   getAll: () => [...(db.inquiries || [])].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
@@ -492,22 +626,26 @@ export const dbInquiries = {
     const newInquiry: InquirySubmission = {
       id: `inq-${Date.now()}`,
       type: data.type || 'quote',
-      fullName: data.fullName || 'Khách hàng',
-      company: data.company,
+      fullName: data.fullName || 'Khách hàng / Ứng viên',
+      company: data.company || '',
       email: data.email || '',
       phone: data.phone || '',
-      serviceInterest: data.serviceInterest,
-      specialization: data.specialization,
-      experienceYears: data.experienceYears,
-      softwareSkills: data.softwareSkills,
-      projectScale: data.projectScale,
+      serviceInterest: data.serviceInterest || '',
+      discipline: (data as any).discipline || '',
+      experienceYears: (data as any).experienceYears || '',
+      softwareSkills: (data as any).softwareSkills || '',
+      portfolioUrl: (data as any).portfolioUrl || '',
+      experienceSummary: (data as any).experienceSummary || '',
+      projectScale: data.projectScale || '',
       message: data.message || '',
       status: 'new',
       createdAt: new Date().toISOString()
     };
     if (!db.inquiries) db.inquiries = [];
-    db.inquiries.push(newInquiry);
+    db.inquiries.unshift(newInquiry);
     saveDb();
+    syncToFirestore('inquiries', newInquiry.id, newInquiry);
+    console.log(`[Inquiries] New submission received (${newInquiry.type}) from: ${newInquiry.fullName}`);
     return newInquiry;
   },
   updateStatus: (id: string, status: InquirySubmission['status']) => {
@@ -516,12 +654,14 @@ export const dbInquiries = {
     if (!item) return null;
     item.status = status;
     saveDb();
+    syncToFirestore('inquiries', id, item);
     return item;
   },
   delete: (id: string) => {
     if (!db.inquiries) return false;
     db.inquiries = db.inquiries.filter(i => i.id !== id);
     saveDb();
+    deleteFromFirestore('inquiries', id);
     return true;
   }
 };
@@ -540,6 +680,7 @@ export const dbMedia = {
     if (!db.media) db.media = [];
     db.media.push(newMedia);
     saveDb();
+    syncToFirestore('media', newMedia.id, newMedia);
     return newMedia;
   },
   updateAltText: (id: string, altText: string) => {
@@ -548,6 +689,7 @@ export const dbMedia = {
     if (!file) return null;
     file.altText = altText;
     saveDb();
+    syncToFirestore('media', id, file);
     return file;
   },
   delete: (id: string) => {
@@ -565,6 +707,7 @@ export const dbMedia = {
     }
     db.media = db.media.filter(m => m.id !== id);
     saveDb();
+    deleteFromFirestore('media', id);
     return true;
   }
 };
@@ -605,6 +748,7 @@ export const dbUsers = {
     };
     db.users.push(newUser);
     saveDb();
+    syncToFirestore('users', newUser.id, newUser);
     return { id: newUser.id, email: newUser.email, name: newUser.name, createdAt: newUser.createdAt };
   },
   delete: (id: string): boolean => {
@@ -614,6 +758,7 @@ export const dbUsers = {
     }
     db.users = db.users.filter(u => u.id !== id);
     saveDb();
+    deleteFromFirestore('users', id);
     return true;
   },
   updatePassword: (userId: string, newPasswordPlain: string): boolean => {
@@ -622,6 +767,7 @@ export const dbUsers = {
     if (!user) return false;
     user.passwordHash = hashPassword(newPasswordPlain);
     saveDb();
+    syncToFirestore('users', userId, user);
     return true;
   },
   updateProfile: (userId: string, updates: { email?: string; name?: string }): boolean => {
@@ -631,6 +777,7 @@ export const dbUsers = {
     if (updates.email) user.email = updates.email.trim().toLowerCase();
     if (updates.name) user.name = updates.name.trim();
     saveDb();
+    syncToFirestore('users', userId, user);
     return true;
   }
 };

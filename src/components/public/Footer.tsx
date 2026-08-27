@@ -198,16 +198,53 @@ export const Footer: React.FC<FooterProps> = ({ navigate, openQuoteModal }) => {
         </div>
       </div>
 
-      {/* Bottom Copyright Strip */}
-      <div className="border-t border-[#D9D8D3]/10 py-6 bg-[#0E0E0E]">
-        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs font-mono-tech text-[#8D8D88]">
-          <div>
-            © {new Date().getFullYear()} DEBRIQ ENGINEERING. ALL RIGHTS RESERVED.
+      {/* Technical Brand Insignia & Engineering Coordinates */}
+      <div className="border-t border-[#262626] bg-[#111111] py-8">
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex items-center gap-4">
+            {/* Official Isometric DEBRIQ Brick Emblem */}
+            <div className="w-12 h-12 bg-[#1A1A1A] border border-[#333] p-1.5 flex items-center justify-center shrink-0 shadow-inner group hover:border-[#F27D26] transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none" className="w-full h-full">
+                <g transform="translate(64, 64) scale(0.68) translate(-100, -100)">
+                  <polygon points="100,16 35,53 65,70 130,33" fill="#FFFFFF" stroke="#FFFFFF" strokeWidth="5" strokeLinejoin="round"/>
+                  <polygon points="35,53 65,70 65,108 35,91" fill="#D9D8D3" stroke="#FFFFFF" strokeWidth="5" strokeLinejoin="round"/>
+                  <polygon points="138,38 73,75 103,92 168,55" fill="#FFFFFF" stroke="#FFFFFF" strokeWidth="5" strokeLinejoin="round"/>
+                  <polygon points="73,75 103,92 103,130 73,113" fill="#D9D8D3" stroke="#FFFFFF" strokeWidth="5" strokeLinejoin="round"/>
+                  <polygon points="103,92 168,55 168,93 103,130" fill="#B5B4AE" stroke="#FFFFFF" strokeWidth="5" strokeLinejoin="round"/>
+                  <polygon points="35,103 100,140 100,178 35,141" fill="#FFFFFF" stroke="#FFFFFF" strokeWidth="5" strokeLinejoin="round"/>
+                  <polygon points="100,140 130,123 130,161 100,178" fill="#D9D8D3" stroke="#FFFFFF" strokeWidth="5" strokeLinejoin="round"/>
+                  <polygon points="138,118 168,101 168,139 138,156" fill="#F27D26" stroke="#F27D26" strokeWidth="5" strokeLinejoin="round"/>
+                </g>
+              </svg>
+            </div>
+            <div>
+              <span className="font-display font-bold text-sm tracking-wider text-white uppercase block">
+                DEBRIQ ENGINEERING
+              </span>
+              <span className="font-mono-tech text-[10px] text-[#777] tracking-widest uppercase">
+                ENGINEERING BEHIND THE BUILD // SHOPDRAWING • BIM • METHOD
+              </span>
+            </div>
           </div>
-          <div className="flex gap-6">
+
+          <div className="flex items-center gap-6 font-mono-tech text-[11px] text-[#666]">
             <span>TCVN 5574:2018</span>
+            <span>•</span>
             <span>BIM / REVIT / AUTOCAD</span>
-            <span>ISO 9001 QUALITY PROCESS</span>
+            <span>•</span>
+            <span>ISO 9001 PROCESS</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom Copyright Strip */}
+      <div className="border-t border-[#1C1C1C] py-5 bg-[#0A0A0A]">
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 flex flex-col sm:flex-row justify-between items-center gap-4 text-[11px] font-mono-tech text-[#666]">
+          <div>
+            © {new Date().getFullYear()} DEBRIQ ENGINEERING CO., LTD. ALL RIGHTS RESERVED.
+          </div>
+          <div className="text-[#555]">
+            BUILD VERSION: 2026.08.PRODUCTION (CLOUD FIRESTORE SYNCED)
           </div>
         </div>
       </div>

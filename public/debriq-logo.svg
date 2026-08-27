@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" fill="none">
+  <!-- DEBRIQ Isometric Blocks / Masonry Cube Official Logo -->
+  <g stroke="#151515" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" fill="#FFFFFF">
+    <!-- Top-Left Upper Block -->
+    <!-- Top face 1 -->
+    <path d="M 200 40 L 90 104 L 145 136 L 255 72 Z" fill="#FFFFFF"/>
+    <!-- Left face 1 -->
+    <path d="M 90 104 L 145 136 L 145 208 L 90 176 Z" fill="#FFFFFF"/>
+
+    <!-- Top-Right Upper Block -->
+    <!-- Top face 2 -->
+    <path d="M 265 78 L 155 142 L 210 174 L 320 110 Z" fill="#FFFFFF"/>
+    <!-- Front/Left Face of Top-Right Block -->
+    <path d="M 155 142 L 210 174 L 210 246 L 155 214 Z" fill="#FFFFFF"/>
+    <!-- Right face 2 -->
+    <path d="M 210 174 L 320 110 L 320 182 L 210 246 Z" fill="#FFFFFF"/>
+
+    <!-- Bottom-Left Lower Block -->
+    <!-- Front-Left face -->
+    <path d="M 90 196 L 200 260 L 200 348 L 90 284 Z" fill="#FFFFFF"/>
+    <!-- Bottom block under divider -->
+    <path d="M 200 260 L 255 228 L 255 316 L 200 348 Z" fill="#FFFFFF"/>
+
+    <!-- Bottom-Right Lower Block -->
+    <!-- Front-Right face -->
+    <path d="M 265 222 L 320 190 L 320 278 L 265 310 Z" fill="#FFFFFF"/>
+  </g>
+</svg>

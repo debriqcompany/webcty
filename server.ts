@@ -483,7 +483,8 @@ app.put('/api/admin/settings', requireAdminAuth, (req, res) => {
 
 // Inquiries / Leads CMS
 app.get('/api/admin/inquiries', requireAdminAuth, (req, res) => {
-  res.json(dbInquiries.getAll());
+  const items = dbInquiries.getAll();
+  res.json({ inquiries: items, count: items.length });
 });
 
 app.patch('/api/admin/inquiries/:id/status', requireAdminAuth, (req, res) => {

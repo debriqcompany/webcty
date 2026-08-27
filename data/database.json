@@ -921,7 +921,8 @@
         "en": "Partnered on structural, finishing, and civil infrastructure shopdrawings across The Global City, Tay Ho Opera, The One World, and K-Home."
       },
       "featured": true,
-      "sortOrder": 1
+      "sortOrder": 1,
+      "logoUrl": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTkL7miDOh_qgYSCqa_NBoLJo6J56Etfy9XeubEcxy6wnaqbaZzZRnfc_k&s=10"
     },
     {
       "id": "ptn-2",
@@ -1195,5 +1196,6 @@
       "passwordHash": "fb911303ed4f8da3ed922e7138cdeb8c:bce6cfd864e3adf2faf699d36e251f112dde0383561bf65be8d7c341dc85c7966eade1e05a07584b2105272e722dd6eae0d1628bd912b4b5e800faa2cd740028",
       "name": "DEBRIQ Technical Administrator"
     }
-  ]
+  ],
+  "articles": []
 }
