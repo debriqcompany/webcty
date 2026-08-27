@@ -2,7 +2,6 @@ import 'dotenv/config';
 import express from 'express';
 import path from 'path';
 import cookieParser from 'cookie-parser';
-import { createServer as createViteServer } from 'vite';
 import {
   initDb,
   dbProjects,
@@ -566,6 +565,7 @@ app.delete('/api/admin/media/:id', requireAdminAuth, (req, res) => {
 
 async function startServer() {
   if (!IS_PRODUCTION) {
+    const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa'
