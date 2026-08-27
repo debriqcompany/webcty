@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800">
+  <defs>
+    <pattern id="cadGrid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#222" stroke-width="0.75"/>
+    </pattern>
+    <pattern id="cadMajorGrid" width="200" height="200" patternUnits="userSpaceOnUse">
+      <path d="M 200 0 L 0 0 0 200" fill="none" stroke="#333" stroke-width="1.5"/>
+    </pattern>
+  </defs>
+
+  <!-- Dark Engineering Background -->
+  <rect width="1200" height="800" fill="#141414"/>
+  <rect width="1200" height="800" fill="url(#cadGrid)"/>
+  <rect width="1200" height="800" fill="url(#cadMajorGrid)"/>
+
+  <!-- Border Frame -->
+  <rect x="30" y="30" width="1140" height="740" fill="none" stroke="#333" stroke-width="2"/>
+  <rect x="36" y="36" width="1128" height="728" fill="none" stroke="#222" stroke-width="1"/>
+
+  <!-- Center Architectural Crosshair Geometry -->
+  <circle cx="600" cy="400" r="180" fill="none" stroke="#F27D26" stroke-width="1.5" stroke-dasharray="6 4" opacity="0.6"/>
+  <circle cx="600" cy="400" r="240" fill="none" stroke="#444" stroke-width="1"/>
+  
+  <line x1="600" y1="120" x2="600" y2="680" stroke="#F27D26" stroke-width="1.5" opacity="0.5" stroke-dasharray="8 6"/>
+  <line x1="260" y1="400" x2="940" y2="400" stroke="#F27D26" stroke-width="1.5" opacity="0.5" stroke-dasharray="8 6"/>
+
+  <!-- Schematic Structural Section -->
+  <rect x="420" y="260" width="360" height="280" fill="#1a1a1a" stroke="#F27D26" stroke-width="2.5"/>
+  <line x1="420" y1="260" x2="780" y2="540" stroke="#333" stroke-width="1"/>
+  <line x1="420" y1="540" x2="780" y2="260" stroke="#333" stroke-width="1"/>
+
+  <!-- Rebar Schematic Points -->
+  <circle cx="450" cy="290" r="8" fill="#F27D26"/>
+  <circle cx="750" cy="290" r="8" fill="#F27D26"/>
+  <circle cx="450" cy="510" r="8" fill="#F27D26"/>
+  <circle cx="750" cy="510" r="8" fill="#F27D26"/>
+  <circle cx="600" cy="290" r="6" fill="#F27D26"/>
+  <circle cx="600" cy="510" r="6" fill="#F27D26"/>
+
+  <!-- Top Title Block -->
+  <rect x="50" y="50" width="360" height="70" fill="#181818" stroke="#333" stroke-width="1.5"/>
+  <text x="70" y="80" fill="#F27D26" font-family="monospace" font-size="16" font-weight="bold" letter-spacing="2">DEBRIQ ENGINEERING</text>
+  <text x="70" y="102" fill="#888" font-family="monospace" font-size="11">TECHNICAL SHOPDRAWING &amp; BIM ARCHIVE</text>
+
+  <!-- Center Label -->
+  <rect x="460" y="375" width="280" height="50" fill="#141414" stroke="#F27D26" stroke-width="1.5"/>
+  <text x="600" y="405" fill="#F3F2EE" font-family="sans-serif" font-size="15" font-weight="bold" text-anchor="middle" letter-spacing="1">PROJECT ASSET MEDIA</text>
+
+  <!-- Bottom Stamp Info -->
+  <rect x="790" y="680" width="360" height="70" fill="#181818" stroke="#333" stroke-width="1.5"/>
+  <text x="810" y="708" fill="#F3F2EE" font-family="monospace" font-size="12" font-weight="bold">SPECIFICATION: TCVN 5574:2018</text>
+  <text x="810" y="730" fill="#666" font-family="monospace" font-size="10">COORDINATION READY // ZERO CLASH</text>
+</svg>

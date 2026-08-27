@@ -1,0 +1,20 @@
+[Unit]
+Description=DEBRIQ Engineering web application
+After=network.target
+
+[Service]
+Type=simple
+User=debriq
+Group=debriq
+WorkingDirectory=/var/www/debriq
+EnvironmentFile=/etc/debriq/debriq.env
+ExecStart=/usr/bin/node /var/www/debriq/dist/server.cjs
+Restart=always
+RestartSec=5
+TimeoutStopSec=15
+KillSignal=SIGTERM
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

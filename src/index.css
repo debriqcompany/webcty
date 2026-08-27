@@ -1,0 +1,210 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --color-bg-light: #F3F2EE;
+    --color-charcoal: #151515;
+    --color-deep-gray: #262626;
+    --color-concrete: #8D8D88;
+    --color-border: #D9D8D3;
+    --color-accent: #F27D26;
+    --color-accent-hover: #D86616;
+  }
+
+  body {
+    font-family: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: #F3F2EE;
+    color: #151515;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+}
+
+/* Font Family Classes */
+.font-display {
+  font-family: 'Archivo', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  letter-spacing: -0.03em;
+}
+
+.font-body,
+.font-sans,
+.font-editorial,
+.font-serif {
+  font-family: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.font-mono-tech,
+.font-mono {
+  font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+/* =========================================================================
+   DEBRIQ ARCHITECTURAL & ENGINEERING TYPOGRAPHY SYSTEM TOKENS
+   ========================================================================= */
+
+/* Hero Display - Confident, architectural Grotesk with negative tracking and natural leading */
+.type-display-hero {
+  font-family: 'Archivo', sans-serif;
+  font-weight: 700;
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+}
+
+/* H1 Headline - Editorial architectural authority */
+.type-h1 {
+  font-family: 'Archivo', sans-serif;
+  font-weight: 700;
+  line-height: 1.06;
+  letter-spacing: -0.025em;
+}
+
+/* H2 Section Headline - Confident, architectural, editorial */
+.type-h2 {
+  font-family: 'Archivo', sans-serif;
+  font-weight: 600;
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+}
+
+/* H3 Card / Sub-section Headline */
+.type-h3 {
+  font-family: 'Archivo', sans-serif;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+}
+
+/* H4 Minor Title */
+.type-h4 {
+  font-family: 'Archivo', sans-serif;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+
+/* Section Drawing Labels: e.g. "01 / ĐỊNH VỊ KỸ THUẬT" */
+.type-section-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.6875rem; /* 11px */
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #F27D26;
+  display: inline-block;
+}
+
+/* Technical Metadata Key (e.g. CLIENT, PERIOD, SCOPE) */
+.type-meta-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.6875rem; /* 11px */
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #767670;
+}
+
+/* Technical Metadata Value */
+.type-meta-value {
+  font-family: 'Be Vietnam Pro', sans-serif;
+  font-size: 0.9375rem; /* 15px */
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  color: #151515;
+}
+
+/* Body Large (Introductory / Lead paragraphs) */
+.type-body-lg {
+  font-family: 'Be Vietnam Pro', sans-serif;
+  font-size: 1.125rem; /* 18px */
+  font-weight: 400;
+  line-height: 1.65;
+  letter-spacing: -0.01em;
+  color: #2D2D2A;
+  max-width: 44rem; /* ~704px measure */
+}
+
+/* Body Base (Standard narrative text) */
+.type-body-base {
+  font-family: 'Be Vietnam Pro', sans-serif;
+  font-size: 1rem; /* 16px */
+  font-weight: 400;
+  line-height: 1.7;
+  letter-spacing: -0.005em;
+  color: #3D3D3A;
+  max-width: 42rem; /* ~672px measure */
+}
+
+/* Body Small */
+.type-body-sm {
+  font-family: 'Be Vietnam Pro', sans-serif;
+  font-size: 0.875rem; /* 14px */
+  font-weight: 400;
+  line-height: 1.6;
+  color: #666662;
+}
+
+/* Navigation & UI Actions */
+.type-nav {
+  font-family: 'Be Vietnam Pro', sans-serif;
+  font-size: 0.75rem; /* 12px */
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* Custom architectural blueprint subtle grid pattern */
+.bg-blueprint-grid {
+  background-image: 
+    linear-gradient(to right, rgba(21, 21, 21, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(21, 21, 21, 0.04) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+.bg-blueprint-grid-dense {
+  background-image: 
+    linear-gradient(to right, rgba(21, 21, 21, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(21, 21, 21, 0.04) 1px, transparent 1px);
+  background-size: 16px 16px;
+}
+
+.bg-blueprint-dark {
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #EBEAE5;
+}
+::-webkit-scrollbar-thumb {
+  background: #BCBBB5;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #8D8D88;
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee 35s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
