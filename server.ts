@@ -647,9 +647,11 @@ async function startServer() {
     <meta name="twitter:description" content="${ogDesc.replace(/"/g, '&quot;')}" />
     <meta name="twitter:image" content="${ogImage}" />`;
 
-        // Replace existing og tags if any, or inject before </head>
+        // Replace existing title and meta tags before injecting dynamic ones
         html = html.replace(/<title>.*?<\/title>/i, '');
-        html = html.replace(/<meta property="og:.*?" \/>/gi, '');
+        html = html.replace(/<meta\s+name=["']description["'][^>]*>/gi, '');
+        html = html.replace(/<meta\s+property=["']og:[^"']*["'][^>]*>/gi, '');
+        html = html.replace(/<meta\s+name=["']twitter:[^"']*["'][^>]*>/gi, '');
         html = html.replace('</head>', `${dynamicMeta}\n  </head>`);
 
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
