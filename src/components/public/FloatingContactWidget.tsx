@@ -185,9 +185,6 @@ export const FloatingContactWidget: React.FC<FloatingContactWidgetProps> = ({ op
             aria-label="Liên hệ Zalo và Tư vấn"
             title="Liên hệ Zalo / Báo giá kỹ thuật"
           >
-            {/* Subtle Wave Ping Animation */}
-            <span className="absolute inset-0 rounded-full bg-[#F27D26]/20 animate-ping pointer-events-none" />
-
             {isOpen ? (
               <div className="w-full h-full bg-[#18181C] flex items-center justify-center">
                 <X className="w-6 h-6 text-white transition-transform rotate-0 group-hover:rotate-90" />
@@ -197,7 +194,7 @@ export const FloatingContactWidget: React.FC<FloatingContactWidgetProps> = ({ op
                 <img
                   src={companyLogo}
                   alt="DEBRIQ Logo"
-                  className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-300"
+                  className="w-full h-full object-contain animate-[spin_18s_linear_infinite] will-change-transform"
                 />
               </div>
             )}

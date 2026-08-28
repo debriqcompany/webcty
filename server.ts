@@ -455,13 +455,35 @@ app.get('/api/admin/services', requireAdminAuth, (req, res) => {
   res.json(dbServices.getAll());
 });
 
-app.put('/api/admin/services/:id', requireAdminAuth, (req, res) => {
-  const updated = dbServices.update(req.params.id, req.body);
-  if (!updated) {
-    res.status(404).json({ error: 'Không tìm thấy dịch vụ.' });
-    return;
+app.post('/api/admin/services', requireAdminAuth, (req, res) => {
+  try {
+    const service = dbServices.create(req.body);
+    res.status(201).json(service);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Lỗi tạo dịch vụ mới' });
   }
-  res.json(updated);
+});
+
+app.put('/api/admin/services/:id', requireAdminAuth, (req, res) => {
+  try {
+    const updated = dbServices.update(req.params.id, req.body);
+    if (!updated) {
+      res.status(404).json({ error: 'Không tìm thấy dịch vụ.' });
+      return;
+    }
+    res.json(updated);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Lỗi cập nhật dịch vụ' });
+  }
+});
+
+app.delete('/api/admin/services/:id', requireAdminAuth, (req, res) => {
+  try {
+    const success = dbServices.delete(req.params.id);
+    res.json({ success });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Lỗi xóa dịch vụ' });
+  }
 });
 
 // Partners CMS
