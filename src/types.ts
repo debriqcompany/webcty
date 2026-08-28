@@ -219,15 +219,17 @@ export interface CompanySettings {
   zaloUrl?: string;          // Boss's Zalo link or phone e.g. https://zalo.me/090...
   zaloLabel?: BilingualText | string;
 
-  // Promotional / Notice Popup Modal
+  // Promotional / Notice Image Popup
   popupEnabled?: boolean;
   popupDelaySeconds?: number;
   popupShowOnce?: boolean;
+  popupImageUrl?: string;
+  popupCtaLink?: string;
+  popupStartDate?: string;    // Start schedule: ISO date/time string e.g. 2026-08-28T00:00
+  popupEndDate?: string;      // End schedule: ISO date/time string e.g. 2026-09-15T23:59
   popupTitle?: BilingualText;
   popupDescription?: BilingualText;
-  popupImageUrl?: string;
   popupCtaText?: BilingualText;
-  popupCtaLink?: string;
 
   foundedYear?: string;
   activeSince?: string;

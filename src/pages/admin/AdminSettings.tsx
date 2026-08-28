@@ -658,7 +658,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ settings, refreshD
           </div>
         </div>
 
-        {/* 4. PROMOTIONAL / NOTICE POPUP MODAL (POPUP QUẢNG CÁO & THÔNG BÁO) */}
+        {/* 4. PROMOTIONAL / NOTICE IMAGE POPUP (POPUP HÌNH ẢNH PNG TỰ DO & LÊN LỊCH) */}
         <div className="bg-[#181818] border border-[#2D2D2D] rounded-lg overflow-hidden shadow-xl">
           <div className="bg-[#202020] p-5 border-b border-[#2D2D2D] flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -667,10 +667,10 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ settings, refreshD
               </div>
               <div>
                 <h2 className="text-base font-bold text-[#F3F2EE]">
-                  Cài đặt Popup Thông Báo / Banner Nổi (Tự Động Bật Tắt)
+                  Cài đặt Popup Hình Ảnh Tự Do (PNG Poster & Lên Lịch)
                 </h2>
                 <p className="text-xs text-[#888] mt-0.5">
-                  Quản lý popup thông báo, giới thiệu dự án hoặc ưu đãi. Khách hàng có thể đóng bằng nút [✕] hoặc bấm bất kỳ đâu bên ngoài.
+                  Tải lên hình ảnh PNG/poster tự thiết kế không bị giới hạn khung viền, kèm nút [✕] đóng và tùy chọn lên lịch hiển thị
                 </p>
               </div>
             </div>
@@ -688,8 +688,76 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ settings, refreshD
 
           <div className="p-6 sm:p-8 space-y-6">
             
-            {/* Timing & Trigger Options */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pb-5 border-b border-[#2C2C32]">
+            {/* 1. PNG Poster Image Upload */}
+            <div>
+              <label className="block text-[#F27D26] font-bold text-xs uppercase mb-1.5 flex items-center gap-1.5">
+                <ImageIcon className="w-4 h-4" />
+                <span>HÌNH ẢNH POPUP (PNG TRONG SUỐT HOẶC BANNER POSTER) *</span>
+              </label>
+              <div className="flex gap-3">
+                <input
+                  type="text"
+                  value={formData.popupImageUrl || ''}
+                  onChange={(e) => setFormData({ ...formData, popupImageUrl: e.target.value })}
+                  placeholder="https://... hoặc chọn ảnh PNG đã tải lên"
+                  className="flex-1 bg-[#111] border border-[#444] focus:border-[#F27D26] p-2.5 text-white rounded focus:outline-none font-mono text-xs"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveMediaTarget('popupImage');
+                    setMediaPickerOpen(true);
+                  }}
+                  className="bg-[#2A2A2E] hover:bg-[#38383E] text-white px-4 font-medium rounded inline-flex items-center gap-1.5 cursor-pointer border border-[#444]"
+                >
+                  <Upload className="w-4 h-4 text-[#F27D26]" />
+                  <span>Chọn / Upload PNG</span>
+                </button>
+              </div>
+
+              {formData.popupImageUrl ? (
+                <div className="mt-4 p-4 bg-[#111] border border-dashed border-[#444] rounded-lg flex flex-col items-center justify-center relative group">
+                  <span className="text-[11px] text-[#777] mb-2 font-mono">[ HÌNH ẢNH SẼ HIỂN THỊ TRÊN WEB ]</span>
+                  <img 
+                    src={formData.popupImageUrl} 
+                    alt="Popup preview" 
+                    className="max-h-64 max-w-full object-contain drop-shadow-xl" 
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, popupImageUrl: '' })}
+                    className="absolute top-3 right-3 bg-red-600 hover:bg-red-700 text-white p-1.5 rounded-full cursor-pointer shadow-lg"
+                    title="Xóa ảnh popup"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="mt-3 p-6 bg-[#141416] border border-dashed border-[#333] rounded text-center text-[#666]">
+                  <p className="text-xs">Chưa có ảnh popup. Vui lòng bấm <strong>Chọn / Upload PNG</strong> để chọn ảnh.</p>
+                </div>
+              )}
+            </div>
+
+            {/* 2. Optional Click Link */}
+            <div className="pt-2 border-t border-[#2C2C32]">
+              <label className="block text-[#AAA] font-medium mb-1.5">
+                LINK ĐIỀU HƯỚNG KHI KHÁCH BẤM VÀO ẢNH (TÙY CHỌN)
+              </label>
+              <input
+                type="text"
+                value={formData.popupCtaLink || ''}
+                onChange={(e) => setFormData({ ...formData, popupCtaLink: e.target.value })}
+                placeholder="quote (để mở form báo giá) hoặc /projects hoặc https://zalo.me/..."
+                className="w-full bg-[#111] border border-[#444] focus:border-[#F27D26] p-2.5 text-white rounded focus:outline-none font-mono text-xs"
+              />
+              <p className="text-[11px] text-[#777] mt-1">
+                Để trống nếu chỉ muốn hiển thị ảnh thông báo và không cần chuyển trang khi bấm vào ảnh.
+              </p>
+            </div>
+
+            {/* 3. Timing & Frequency */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-4 border-t border-[#2C2C32]">
               <div>
                 <label className="block text-[#AAA] font-medium mb-1.5 flex items-center gap-1.5">
                   <Clock className="w-3.5 h-3.5 text-[#F27D26]" />
@@ -704,7 +772,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ settings, refreshD
                   className="w-full bg-[#111] border border-[#444] focus:border-[#F27D26] p-2.5 text-white rounded focus:outline-none"
                 />
                 <p className="text-[11px] text-[#777] mt-1">
-                  Sau bao nhiêu giây khi khách truy cập web thì popup sẽ xuất hiện (mặc định: 3 giây).
+                  Sau bao nhiêu giây khi khách truy cập web thì popup xuất hiện (mặc định: 3 giây).
                 </p>
               </div>
 
@@ -721,156 +789,43 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ settings, refreshD
                     className="w-4 h-4 accent-[#F27D26] rounded cursor-pointer"
                   />
                   <label htmlFor="popupShowOnce" className="text-xs text-[#DDD] cursor-pointer">
-                    Chỉ hiện 1 lần / phiên truy cập (khách đã tắt sẽ không hiện lại gây phiền)
+                    Chỉ hiện 1 lần / phiên truy cập (khách đã bấm tắt sẽ không hiện lại)
                   </label>
                 </div>
               </div>
             </div>
 
-            {/* Popup Content */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div>
-                <label className="block text-[#AAA] font-medium mb-1.5">
-                  TIÊU ĐỀ POPUP (TIẾNG VIỆT)
-                </label>
-                <input
-                  type="text"
-                  value={typeof formData.popupTitle === 'object' ? formData.popupTitle?.vi : (formData.popupTitle || '')}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    const cur = typeof formData.popupTitle === 'object' ? formData.popupTitle : { vi: '', en: '' };
-                    setFormData({ ...formData, popupTitle: { vi: val, en: cur?.en || '' } });
-                  }}
-                  placeholder="VD: HỒ SƠ NĂNG LỰC DỰ ÁN MỚI 2026"
-                  className="w-full bg-[#111] border border-[#444] focus:border-[#F27D26] p-2.5 text-white rounded focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[#AAA] font-medium mb-1.5">
-                  TIÊU ĐỀ POPUP (ENGLISH)
-                </label>
-                <input
-                  type="text"
-                  value={typeof formData.popupTitle === 'object' ? formData.popupTitle?.en : ''}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    const cur = typeof formData.popupTitle === 'object' ? formData.popupTitle : { vi: '', en: '' };
-                    setFormData({ ...formData, popupTitle: { vi: cur?.vi || '', en: val } });
-                  }}
-                  placeholder="VD: DEBRIQ ENGINEERING PORTFOLIO"
-                  className="w-full bg-[#111] border border-[#444] focus:border-[#F27D26] p-2.5 text-white rounded focus:outline-none"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div>
-                <label className="block text-[#AAA] font-medium mb-1.5">
-                  MÔ TẢ NỘI DUNG (TIẾNG VIỆT)
-                </label>
-                <textarea
-                  rows={3}
-                  value={typeof formData.popupDescription === 'object' ? formData.popupDescription?.vi : (formData.popupDescription || '')}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    const cur = typeof formData.popupDescription === 'object' ? formData.popupDescription : { vi: '', en: '' };
-                    setFormData({ ...formData, popupDescription: { vi: val, en: cur?.en || '' } });
-                  }}
-                  placeholder="Nhập thông điệp chào mừng, cam kết tiến độ hoặc thông báo quan trọng..."
-                  className="w-full bg-[#111] border border-[#444] focus:border-[#F27D26] p-2.5 text-white rounded focus:outline-none font-sans"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[#AAA] font-medium mb-1.5">
-                  MÔ TẢ NỘI DUNG (ENGLISH)
-                </label>
-                <textarea
-                  rows={3}
-                  value={typeof formData.popupDescription === 'object' ? formData.popupDescription?.en : ''}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    const cur = typeof formData.popupDescription === 'object' ? formData.popupDescription : { vi: '', en: '' };
-                    setFormData({ ...formData, popupDescription: { vi: cur?.vi || '', en: val } });
-                  }}
-                  placeholder="Enter notice description in English..."
-                  className="w-full bg-[#111] border border-[#444] focus:border-[#F27D26] p-2.5 text-white rounded focus:outline-none font-sans"
-                />
-              </div>
-            </div>
-
-            {/* Poster Image / Banner */}
-            <div>
-              <label className="block text-[#AAA] font-medium mb-1.5">
-                ẢNH POSTER / BANNER POPUP (TÙY CHỌN)
+            {/* 4. Scheduling: Start & End Date */}
+            <div className="pt-4 border-t border-[#2C2C32]">
+              <label className="block text-[#AAA] font-medium mb-2 font-mono text-xs uppercase">
+                ⏰ LÊN LỊCH THỜI GIAN HIỂN THỊ & KẾT THÚC (TÙY CHỌN)
               </label>
-              <div className="flex gap-3">
-                <input
-                  type="text"
-                  value={formData.popupImageUrl || ''}
-                  onChange={(e) => setFormData({ ...formData, popupImageUrl: e.target.value })}
-                  placeholder="https://... hoặc chọn từ thư viện"
-                  className="flex-1 bg-[#111] border border-[#444] focus:border-[#F27D26] p-2.5 text-white rounded focus:outline-none font-mono text-xs"
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActiveMediaTarget('popupImage');
-                    setMediaPickerOpen(true);
-                  }}
-                  className="bg-[#2A2A2E] hover:bg-[#38383E] text-white px-4 font-medium rounded inline-flex items-center gap-1.5 cursor-pointer border border-[#444]"
-                >
-                  <Upload className="w-4 h-4 text-[#F27D26]" />
-                  <span>Chọn ảnh</span>
-                </button>
-              </div>
-
-              {formData.popupImageUrl && (
-                <div className="mt-3 max-w-sm rounded border border-[#333] overflow-hidden bg-black aspect-video relative">
-                  <img src={formData.popupImageUrl} alt="Popup preview" className="w-full h-full object-cover" />
-                  <button
-                    type="button"
-                    onClick={() => setFormData({ ...formData, popupImageUrl: '' })}
-                    className="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white p-1 rounded-full cursor-pointer"
-                    title="Xóa ảnh"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-[11px] text-[#888] mb-1">
+                    BẮT ĐẦU HIỂN THỊ TỪ NGÀY / GIỜ:
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={formData.popupStartDate || ''}
+                    onChange={(e) => setFormData({ ...formData, popupStartDate: e.target.value })}
+                    className="w-full bg-[#111] border border-[#444] focus:border-[#F27D26] p-2.5 text-white rounded focus:outline-none text-xs font-mono"
+                  />
+                  <p className="text-[10px] text-[#666] mt-1">Để trống nếu muốn hiển thị ngay lập tức khi bật.</p>
                 </div>
-              )}
-            </div>
 
-            {/* CTA Button Settings */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-3 border-t border-[#2C2C32]">
-              <div>
-                <label className="block text-[#AAA] font-medium mb-1.5">
-                  CHỮ TRÊN NÚT HÀNH ĐỘNG (CTA TEXT)
-                </label>
-                <input
-                  type="text"
-                  value={typeof formData.popupCtaText === 'object' ? formData.popupCtaText?.vi : (formData.popupCtaText || 'NHẬN TƯ VẤN & BÁO GIÁ')}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    const cur = typeof formData.popupCtaText === 'object' ? formData.popupCtaText : { vi: '', en: '' };
-                    setFormData({ ...formData, popupCtaText: { vi: val, en: cur?.en || 'GET A QUOTE' } });
-                  }}
-                  placeholder="NHẬN TƯ VẤN & BÁO GIÁ"
-                  className="w-full bg-[#111] border border-[#444] focus:border-[#F27D26] p-2.5 text-white rounded focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[#AAA] font-medium mb-1.5">
-                  LINK KHI BẤM NÚT (CTA LINK)
-                </label>
-                <input
-                  type="text"
-                  value={formData.popupCtaLink || 'quote'}
-                  onChange={(e) => setFormData({ ...formData, popupCtaLink: e.target.value })}
-                  placeholder="quote (để mở form báo giá) hoặc /projects hoặc https://zalo.me/..."
-                  className="w-full bg-[#111] border border-[#444] focus:border-[#F27D26] p-2.5 text-white rounded focus:outline-none font-mono text-xs"
-                />
+                <div>
+                  <label className="block text-[11px] text-[#888] mb-1">
+                    TỰ ĐỘNG KẾT THÚC VÀO NGÀY / GIỜ:
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={formData.popupEndDate || ''}
+                    onChange={(e) => setFormData({ ...formData, popupEndDate: e.target.value })}
+                    className="w-full bg-[#111] border border-[#444] focus:border-[#F27D26] p-2.5 text-white rounded focus:outline-none text-xs font-mono"
+                  />
+                  <p className="text-[10px] text-[#666] mt-1">Để trống nếu không có thời hạn kết thúc.</p>
+                </div>
               </div>
             </div>
 

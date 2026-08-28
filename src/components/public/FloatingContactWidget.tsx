@@ -12,12 +12,15 @@ export const FloatingContactWidget: React.FC<FloatingContactWidgetProps> = ({ op
   const { settings } = useData();
   const [isOpen, setIsOpen] = useState(false);
 
-  // If settings not loaded yet or explicitly disabled in admin settings, do not render
+  // If explicitly disabled in admin settings, do not render
   if (settings && settings.floatingZaloEnabled === false) {
     return null;
   }
 
-  // Format Zalo link: supports phone number like 090... or direct URL like https://zalo.me/...
+  // Use provided official logo URL or settings logoUrl
+  const companyLogo = settings?.logoUrl || '/uploads/general/Debriqlogo-c3797cd49f6eb1f0.webp';
+
+  // Format Zalo link: supports phone number like 0983147456 or direct URL like https://zalo.me/...
   const rawZalo = settings?.zaloUrl || settings?.zalo || '0983147456';
   const zaloHref = rawZalo.startsWith('http') 
     ? rawZalo 
@@ -36,14 +39,12 @@ export const FloatingContactWidget: React.FC<FloatingContactWidgetProps> = ({ op
         >
           {/* Header */}
           <div className="flex items-center justify-between border-b border-[#2E2E34] pb-2.5">
-            <div className="flex items-center gap-2">
-              {settings?.logoUrl ? (
-                <img src={settings.logoUrl} alt="DEBRIQ" className="w-5 h-5 object-contain" />
-              ) : (
-                <div className="w-5 h-5 bg-[#F27D26] text-white flex items-center justify-center font-bold text-[10px] rounded">
-                  DQ
-                </div>
-              )}
+            <div className="flex items-center gap-2.5">
+              <img 
+                src={companyLogo} 
+                alt="DEBRIQ" 
+                className="w-6 h-6 object-contain rounded"
+              />
               <span className="font-bold uppercase tracking-wider text-[11px] text-white">
                 {lang === 'vi' ? 'KẾT NỐI KỸ THUẬT' : 'TECHNICAL DESK'}
               </span>
@@ -143,34 +144,35 @@ export const FloatingContactWidget: React.FC<FloatingContactWidgetProps> = ({ op
         {!isOpen && (
           <div 
             onClick={() => setIsOpen(true)}
-            className="hidden sm:flex items-center gap-2 bg-[#18181C]/90 backdrop-blur-md border border-[#333] hover:border-[#F27D26] px-3.5 py-2 rounded-full shadow-xl text-xs text-white cursor-pointer group transition-all hover:scale-105"
+            className="hidden sm:flex items-center gap-2 bg-[#18181C]/90 backdrop-blur-md border border-[#333] hover:border-[#F27D26] px-3 py-1.5 rounded-full shadow-xl text-xs text-white cursor-pointer group transition-all hover:scale-105"
           >
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="font-semibold font-sans text-xs">
-              {lang === 'vi' ? 'Tư vấn Zalo / Báo giá' : 'Zalo Support'}
+            <span className="font-medium font-sans text-xs">
+              {lang === 'vi' ? 'Liên hệ / Báo giá' : 'Support Desk'}
             </span>
           </div>
         )}
 
-        {/* Circular Floating Button */}
+        {/* Floating Button displaying cleanly the DEBRIQ Company Logo */}
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="relative w-13 h-13 sm:w-14 sm:h-14 bg-gradient-to-br from-[#18181C] to-[#0D0D10] hover:from-[#F27D26] hover:to-[#D86616] border-2 border-[#F27D26] rounded-full flex items-center justify-center shadow-2xl cursor-pointer transition-all duration-300 transform active:scale-95 group overflow-hidden"
+          className="relative w-12 h-12 sm:w-14 sm:h-14 bg-white rounded-full flex items-center justify-center shadow-2xl cursor-pointer transition-all duration-300 transform active:scale-95 group overflow-hidden border-2 border-[#F27D26] hover:shadow-[0_0_20px_rgba(242,125,38,0.4)]"
           aria-label="Liên hệ Zalo và Tư vấn"
           title="Liên hệ Zalo / Báo giá kỹ thuật"
         >
           {/* Subtle Wave Ping Animation */}
-          <span className="absolute inset-0 rounded-full bg-[#F27D26]/30 animate-ping pointer-events-none" />
+          <span className="absolute inset-0 rounded-full bg-[#F27D26]/20 animate-ping pointer-events-none" />
 
           {isOpen ? (
-            <X className="w-6 h-6 text-white relative z-10 transition-transform rotate-0 group-hover:rotate-90" />
+            <div className="w-full h-full bg-[#18181C] flex items-center justify-center">
+              <X className="w-6 h-6 text-white transition-transform rotate-0 group-hover:rotate-90" />
+            </div>
           ) : (
-            <div className="relative z-10 flex items-center justify-center w-full h-full">
-              {/* Official Zalo Icon */}
+            <div className="relative z-10 flex items-center justify-center w-full h-full p-2">
               <img
-                src="https://img.icons8.com/?size=100&id=0m71tmRjlxEe&format=png&color=000000"
-                alt="Zalo"
-                className="w-7 h-7 sm:w-8 sm:h-8 p-1 bg-white rounded-full object-contain shadow-md group-hover:scale-110 transition-transform"
+                src={companyLogo}
+                alt="DEBRIQ Logo"
+                className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-300"
               />
             </div>
           )}
