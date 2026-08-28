@@ -206,8 +206,8 @@ export const Footer: React.FC<FooterProps> = ({ navigate, openQuoteModal }) => {
             <div className="w-12 h-12 bg-[#1A1A1A] border border-[#333] p-1.5 flex items-center justify-center shrink-0 shadow-inner group hover:border-[#F27D26] transition-colors overflow-hidden">
               {(settings?.footerLogoUrl || settings?.logoUrl) ? (
                 <img 
-                  src={settings.footerLogoUrl || settings.logoUrl} 
-                  alt={settings.displayName || 'DEBRIQ'} 
+                  src={settings?.footerLogoUrl || settings?.logoUrl} 
+                  alt={settings?.displayName || 'DEBRIQ'} 
                   className="w-full h-full object-contain"
                 />
               ) : (

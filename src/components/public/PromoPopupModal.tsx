@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useData } from '../../context/DataContext';
-import { X, ArrowUpRight, Sparkles } from 'lucide-react';
+import { X, ArrowUpRight } from 'lucide-react';
 
 interface PromoPopupModalProps {
   navigate: (path: string) => void;
@@ -14,31 +14,39 @@ export const PromoPopupModal: React.FC<PromoPopupModalProps> = ({ navigate, open
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    // Check if popup is enabled
-    if (!settings.popupEnabled) return;
+    // If settings not loaded or popup is disabled, do nothing
+    if (!settings?.popupEnabled) return;
 
     // Check if user already dismissed it in current session
-    const isDismissed = sessionStorage.getItem('debriq_popup_dismissed');
-    if (settings.popupShowOnce !== false && isDismissed === 'true') {
-      return;
+    try {
+      const isDismissed = sessionStorage.getItem('debriq_popup_dismissed');
+      if (settings?.popupShowOnce !== false && isDismissed === 'true') {
+        return;
+      }
+    } catch {
+      // ignore
     }
 
-    const delayMs = (settings.popupDelaySeconds ?? 3) * 1000;
+    const delayMs = (settings?.popupDelaySeconds ?? 3) * 1000;
     const timer = setTimeout(() => {
       setIsOpen(true);
     }, delayMs);
 
     return () => clearTimeout(timer);
-  }, [settings.popupEnabled, settings.popupDelaySeconds, settings.popupShowOnce]);
+  }, [settings?.popupEnabled, settings?.popupDelaySeconds, settings?.popupShowOnce]);
 
   const handleClose = () => {
     setIsOpen(false);
-    sessionStorage.setItem('debriq_popup_dismissed', 'true');
+    try {
+      sessionStorage.setItem('debriq_popup_dismissed', 'true');
+    } catch {
+      // ignore
+    }
   };
 
   const handleCtaClick = () => {
     handleClose();
-    if (settings.popupCtaLink) {
+    if (settings?.popupCtaLink) {
       if (settings.popupCtaLink.startsWith('http')) {
         window.open(settings.popupCtaLink, '_blank', 'noopener,noreferrer');
       } else if (settings.popupCtaLink.startsWith('/')) {
@@ -51,21 +59,21 @@ export const PromoPopupModal: React.FC<PromoPopupModalProps> = ({ navigate, open
     }
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || !settings?.popupEnabled) return null;
 
-  const titleText = typeof settings.popupTitle === 'object'
-    ? t(settings.popupTitle)
-    : (settings.popupTitle || (lang === 'vi' ? 'HỒ SƠ KỸ THUẬT & DỊCH VỤ DEBRIQ' : 'DEBRIQ ENGINEERING PORTFOLIO'));
+  const titleText = typeof settings?.popupTitle === 'object'
+    ? t(settings?.popupTitle)
+    : (settings?.popupTitle || (lang === 'vi' ? 'HỒ SƠ KỸ THUẬT & DỊCH VỤ DEBRIQ' : 'DEBRIQ ENGINEERING PORTFOLIO'));
 
-  const descText = typeof settings.popupDescription === 'object'
-    ? t(settings.popupDescription)
-    : (settings.popupDescription || (lang === 'vi' 
+  const descText = typeof settings?.popupDescription === 'object'
+    ? t(settings?.popupDescription)
+    : (settings?.popupDescription || (lang === 'vi' 
         ? 'Đối tác tin cậy đồng hành cùng các tổng thầu trong triển khai Shopdrawing kết cấu, hoàn thiện, BIM/Revit và biện pháp thi công thực chiến.' 
         : 'Dedicated technical engineering partner delivering precise shopdrawings, BIM Revit models, and construction methodologies.'));
 
-  const ctaText = typeof settings.popupCtaText === 'object'
-    ? t(settings.popupCtaText)
-    : (settings.popupCtaText || (lang === 'vi' ? 'NHẬN TƯ VẤN & BÁO GIÁ' : 'GET A PROPOSAL'));
+  const ctaText = typeof settings?.popupCtaText === 'object'
+    ? t(settings?.popupCtaText)
+    : (settings?.popupCtaText || (lang === 'vi' ? 'NHẬN TƯ VẤN & BÁO GIÁ' : 'GET A PROPOSAL'));
 
   return (
     <div 
@@ -107,7 +115,7 @@ export const PromoPopupModal: React.FC<PromoPopupModalProps> = ({ navigate, open
         </div>
 
         {/* Optional Image / Poster Banner */}
-        {settings.popupImageUrl ? (
+        {settings?.popupImageUrl ? (
           <div className="relative aspect-[16/9] w-full bg-[#111] overflow-hidden border-b border-[#333]">
             <img 
               src={settings.popupImageUrl} 
@@ -129,7 +137,7 @@ export const PromoPopupModal: React.FC<PromoPopupModalProps> = ({ navigate, open
 
         {/* Modal Body */}
         <div className="p-6 sm:p-8 space-y-4 bg-[#18181C]">
-          {settings.popupImageUrl && (
+          {settings?.popupImageUrl && (
             <h3 className="text-lg sm:text-xl font-bold font-display tracking-tight text-white leading-snug">
               {titleText}
             </h3>

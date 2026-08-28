@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useData } from '../../context/DataContext';
-import { MessageSquare, Phone, ArrowUpRight, X, Sparkles } from 'lucide-react';
+import { Phone, ArrowUpRight, X, Sparkles } from 'lucide-react';
 
 interface FloatingContactWidgetProps {
   openQuoteModal: (service?: string) => void;
@@ -12,16 +12,18 @@ export const FloatingContactWidget: React.FC<FloatingContactWidgetProps> = ({ op
   const { settings } = useData();
   const [isOpen, setIsOpen] = useState(false);
 
-  // If explicitly disabled in admin settings, do not render
-  if (settings.floatingZaloEnabled === false) return null;
+  // If settings not loaded yet or explicitly disabled in admin settings, do not render
+  if (settings && settings.floatingZaloEnabled === false) {
+    return null;
+  }
 
   // Format Zalo link: supports phone number like 090... or direct URL like https://zalo.me/...
-  const rawZalo = settings.zaloUrl || settings.zalo || '0900000000';
+  const rawZalo = settings?.zaloUrl || settings?.zalo || '0983147456';
   const zaloHref = rawZalo.startsWith('http') 
     ? rawZalo 
     : `https://zalo.me/${rawZalo.replace(/[^0-9]/g, '')}`;
 
-  const hotlineHref = `tel:${(settings.hotline || '').replace(/[^0-9+]/g, '')}`;
+  const hotlineHref = `tel:${(settings?.hotline || '0983147456').replace(/[^0-9+]/g, '')}`;
 
   return (
     <div className="fixed bottom-5 right-5 sm:bottom-6 sm:right-6 z-40 flex flex-col items-end font-mono-tech select-none">
@@ -35,7 +37,7 @@ export const FloatingContactWidget: React.FC<FloatingContactWidgetProps> = ({ op
           {/* Header */}
           <div className="flex items-center justify-between border-b border-[#2E2E34] pb-2.5">
             <div className="flex items-center gap-2">
-              {settings.logoUrl ? (
+              {settings?.logoUrl ? (
                 <img src={settings.logoUrl} alt="DEBRIQ" className="w-5 h-5 object-contain" />
               ) : (
                 <div className="w-5 h-5 bg-[#F27D26] text-white flex items-center justify-center font-bold text-[10px] rounded">
@@ -83,7 +85,7 @@ export const FloatingContactWidget: React.FC<FloatingContactWidgetProps> = ({ op
                     {lang === 'vi' ? 'Chat Zalo Kỹ Thuật' : 'Chat via Zalo'}
                   </span>
                   <span className="text-[10px] text-[#A0A09A] font-mono">
-                    {settings.zaloUrl || settings.zalo || 'Tư vấn 24/7'}
+                    {settings?.zaloUrl || settings?.zalo || '0983 147 456'}
                   </span>
                 </div>
               </div>
@@ -91,7 +93,7 @@ export const FloatingContactWidget: React.FC<FloatingContactWidgetProps> = ({ op
             </a>
 
             {/* Hotline Call */}
-            {settings.hotline && (
+            {settings?.hotline && (
               <a
                 href={hotlineHref}
                 className="flex items-center justify-between p-2.5 bg-[#222226] hover:bg-[#2C2C32] border border-[#3A3A40] rounded-xl text-white transition-all group cursor-pointer"
