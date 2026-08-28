@@ -59,14 +59,14 @@ app.use((_req, res, next) => {
   );
 
   // Content Security Policy (CSP)
-  // Configured to securely support Google Fonts, Cloudflare Insights, Firebase/Google APIs, dynamic uploads, and Vite assets
+  // Configured to securely support Google Fonts, Cloudflare Insights, Firebase/Google APIs, Google Tag Manager/Analytics, dynamic uploads, and Vite assets
   const cspDirectives = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://static.cloudflareinsights.com https://*.googleapis.com https://*.google.com",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://static.cloudflareinsights.com https://*.googleapis.com https://*.google.com https://www.googletagmanager.com https://*.googletagmanager.com https://*.google-analytics.com https://*.analytics.google.com",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' data: https://fonts.gstatic.com",
-    "img-src 'self' data: blob: https: http:",
-    "connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://static.cloudflareinsights.com https://cloudflareinsights.com https: wss: ws:",
+    "img-src 'self' data: blob: https: http: https://*.google-analytics.com https://*.googletagmanager.com",
+    "connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://static.cloudflareinsights.com https://cloudflareinsights.com https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https: wss: ws:",
     "media-src 'self' data: blob: https:",
     "object-src 'none'",
     "frame-src 'self'",
