@@ -17,7 +17,12 @@ import {
   Image as ImageIcon,
   Share2,
   Upload,
-  Globe
+  Globe,
+  MessageSquare,
+  Bell,
+  Sparkles,
+  Clock,
+  ExternalLink
 } from 'lucide-react';
 import { useAdminAuth } from '../../context/AdminAuthContext';
 import { MediaPickerModal } from '../../components/admin/MediaPickerModal';
@@ -63,7 +68,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ settings, refreshD
 
   // Media Picker State
   const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
-  const [activeMediaTarget, setActiveMediaTarget] = useState<'logo' | 'footerLogo' | 'favicon' | 'ogImage' | null>(null);
+  const [activeMediaTarget, setActiveMediaTarget] = useState<'logo' | 'footerLogo' | 'favicon' | 'ogImage' | 'popupImage' | null>(null);
 
   // Sync state if settings prop changes
   useEffect(() => {
@@ -153,6 +158,8 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ settings, refreshD
       setFormData(prev => ({ ...prev, faviconUrl: media.url }));
     } else if (activeMediaTarget === 'ogImage') {
       setFormData(prev => ({ ...prev, ogImageUrl: media.url }));
+    } else if (activeMediaTarget === 'popupImage') {
+      setFormData(prev => ({ ...prev, popupImageUrl: media.url }));
     }
     setMediaPickerOpen(false);
     setActiveMediaTarget(null);
@@ -578,7 +585,299 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ settings, refreshD
           </div>
         </div>
 
-        {/* 3. GENERAL COMPANY INFORMATION */}
+        {/* 3. FLOATING QUICK CONTACT & ZALO BOSS WIDGET */}
+        <div className="bg-[#181818] border border-[#2D2D2D] rounded-lg overflow-hidden shadow-xl">
+          <div className="bg-[#202020] p-5 border-b border-[#2D2D2D] flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-[#0068FF]/10 border border-[#0068FF]/30 flex items-center justify-center">
+                <img
+                  src="https://img.icons8.com/?size=100&id=0m71tmRjlxEe&format=png&color=000000"
+                  alt="Zalo"
+                  className="w-5 h-5 p-0.5 bg-white rounded-full object-contain"
+                />
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-[#F3F2EE]">
+                  Cài đặt Nút Liên Hệ Nhanh & Zalo Sếp (Góc Phải Màn Hình)
+                </h2>
+                <p className="text-xs text-[#888] mt-0.5">
+                  Hiển thị nút tròn nổi kèm icon Zalo ở góc phải màn hình, khách bấm vào sẽ mở trực tiếp Zalo của Sếp
+                </p>
+              </div>
+            </div>
+
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formData.floatingZaloEnabled !== false}
+                onChange={(e) => setFormData({ ...formData, floatingZaloEnabled: e.target.checked })}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-[#27272A] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#0068FF]"></div>
+            </label>
+          </div>
+
+          <div className="p-6 sm:p-8 space-y-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div>
+                <label className="block text-[#AAA] font-medium mb-1.5">
+                  LINK ZALO HOẶC SỐ ĐIỆN THOẠI ZALO CỦA SẾP *
+                </label>
+                <input
+                  type="text"
+                  value={formData.zaloUrl || formData.zalo || ''}
+                  onChange={(e) => setFormData({ ...formData, zaloUrl: e.target.value, zalo: e.target.value })}
+                  placeholder="https://zalo.me/0983147456 hoặc 0983147456"
+                  className="w-full bg-[#111] border border-[#444] focus:border-[#0068FF] p-2.5 text-white rounded focus:outline-none font-mono text-xs"
+                />
+                <p className="text-[11px] text-[#777] mt-1">
+                  Nhập URL dạng <code className="text-[#38BDF8]">https://zalo.me/0983147456</code> hoặc số điện thoại Zalo.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-[#AAA] font-medium mb-1.5">
+                  TRẠNG THÁI HIỂN THỊ
+                </label>
+                <div className="p-3 bg-[#111] border border-[#333] rounded-lg flex items-center justify-between">
+                  <span className="text-xs text-[#CCC]">
+                    {formData.floatingZaloEnabled !== false ? '🟢 Đang BẬT trên toàn website' : '🔴 Đang TẮT'}
+                  </span>
+                  <a
+                    href={formData.zaloUrl ? (formData.zaloUrl.startsWith('http') ? formData.zaloUrl : `https://zalo.me/${formData.zaloUrl.replace(/[^0-9]/g, '')}`) : '#'}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs text-[#38BDF8] hover:underline flex items-center gap-1"
+                  >
+                    <span>Test mở link Zalo</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 4. PROMOTIONAL / NOTICE POPUP MODAL (POPUP QUẢNG CÁO & THÔNG BÁO) */}
+        <div className="bg-[#181818] border border-[#2D2D2D] rounded-lg overflow-hidden shadow-xl">
+          <div className="bg-[#202020] p-5 border-b border-[#2D2D2D] flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-[#F27D26]/10 border border-[#F27D26]/30 flex items-center justify-center text-[#F27D26]">
+                <Bell className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-[#F3F2EE]">
+                  Cài đặt Popup Thông Báo / Banner Nổi (Tự Động Bật Tắt)
+                </h2>
+                <p className="text-xs text-[#888] mt-0.5">
+                  Quản lý popup thông báo, giới thiệu dự án hoặc ưu đãi. Khách hàng có thể đóng bằng nút [✕] hoặc bấm bất kỳ đâu bên ngoài.
+                </p>
+              </div>
+            </div>
+
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={Boolean(formData.popupEnabled)}
+                onChange={(e) => setFormData({ ...formData, popupEnabled: e.target.checked })}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-[#27272A] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#F27D26]"></div>
+            </label>
+          </div>
+
+          <div className="p-6 sm:p-8 space-y-6">
+            
+            {/* Timing & Trigger Options */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pb-5 border-b border-[#2C2C32]">
+              <div>
+                <label className="block text-[#AAA] font-medium mb-1.5 flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5 text-[#F27D26]" />
+                  <span>THỜI GIAN TRỄ HIỂN THỊ (GIÂY)</span>
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  max="60"
+                  value={formData.popupDelaySeconds ?? 3}
+                  onChange={(e) => setFormData({ ...formData, popupDelaySeconds: parseInt(e.target.value, 10) || 0 })}
+                  className="w-full bg-[#111] border border-[#444] focus:border-[#F27D26] p-2.5 text-white rounded focus:outline-none"
+                />
+                <p className="text-[11px] text-[#777] mt-1">
+                  Sau bao nhiêu giây khi khách truy cập web thì popup sẽ xuất hiện (mặc định: 3 giây).
+                </p>
+              </div>
+
+              <div className="flex flex-col justify-center">
+                <label className="block text-[#AAA] font-medium mb-1.5">
+                  TẦN SUẤT XUẤT HIỆN
+                </label>
+                <div className="flex items-center gap-3 p-2.5 bg-[#111] border border-[#333] rounded">
+                  <input
+                    type="checkbox"
+                    id="popupShowOnce"
+                    checked={formData.popupShowOnce !== false}
+                    onChange={(e) => setFormData({ ...formData, popupShowOnce: e.target.checked })}
+                    className="w-4 h-4 accent-[#F27D26] rounded cursor-pointer"
+                  />
+                  <label htmlFor="popupShowOnce" className="text-xs text-[#DDD] cursor-pointer">
+                    Chỉ hiện 1 lần / phiên truy cập (khách đã tắt sẽ không hiện lại gây phiền)
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {/* Popup Content */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div>
+                <label className="block text-[#AAA] font-medium mb-1.5">
+                  TIÊU ĐỀ POPUP (TIẾNG VIỆT)
+                </label>
+                <input
+                  type="text"
+                  value={typeof formData.popupTitle === 'object' ? formData.popupTitle?.vi : (formData.popupTitle || '')}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    const cur = typeof formData.popupTitle === 'object' ? formData.popupTitle : { vi: '', en: '' };
+                    setFormData({ ...formData, popupTitle: { vi: val, en: cur?.en || '' } });
+                  }}
+                  placeholder="VD: HỒ SƠ NĂNG LỰC DỰ ÁN MỚI 2026"
+                  className="w-full bg-[#111] border border-[#444] focus:border-[#F27D26] p-2.5 text-white rounded focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[#AAA] font-medium mb-1.5">
+                  TIÊU ĐỀ POPUP (ENGLISH)
+                </label>
+                <input
+                  type="text"
+                  value={typeof formData.popupTitle === 'object' ? formData.popupTitle?.en : ''}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    const cur = typeof formData.popupTitle === 'object' ? formData.popupTitle : { vi: '', en: '' };
+                    setFormData({ ...formData, popupTitle: { vi: cur?.vi || '', en: val } });
+                  }}
+                  placeholder="VD: DEBRIQ ENGINEERING PORTFOLIO"
+                  className="w-full bg-[#111] border border-[#444] focus:border-[#F27D26] p-2.5 text-white rounded focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div>
+                <label className="block text-[#AAA] font-medium mb-1.5">
+                  MÔ TẢ NỘI DUNG (TIẾNG VIỆT)
+                </label>
+                <textarea
+                  rows={3}
+                  value={typeof formData.popupDescription === 'object' ? formData.popupDescription?.vi : (formData.popupDescription || '')}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    const cur = typeof formData.popupDescription === 'object' ? formData.popupDescription : { vi: '', en: '' };
+                    setFormData({ ...formData, popupDescription: { vi: val, en: cur?.en || '' } });
+                  }}
+                  placeholder="Nhập thông điệp chào mừng, cam kết tiến độ hoặc thông báo quan trọng..."
+                  className="w-full bg-[#111] border border-[#444] focus:border-[#F27D26] p-2.5 text-white rounded focus:outline-none font-sans"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[#AAA] font-medium mb-1.5">
+                  MÔ TẢ NỘI DUNG (ENGLISH)
+                </label>
+                <textarea
+                  rows={3}
+                  value={typeof formData.popupDescription === 'object' ? formData.popupDescription?.en : ''}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    const cur = typeof formData.popupDescription === 'object' ? formData.popupDescription : { vi: '', en: '' };
+                    setFormData({ ...formData, popupDescription: { vi: cur?.vi || '', en: val } });
+                  }}
+                  placeholder="Enter notice description in English..."
+                  className="w-full bg-[#111] border border-[#444] focus:border-[#F27D26] p-2.5 text-white rounded focus:outline-none font-sans"
+                />
+              </div>
+            </div>
+
+            {/* Poster Image / Banner */}
+            <div>
+              <label className="block text-[#AAA] font-medium mb-1.5">
+                ẢNH POSTER / BANNER POPUP (TÙY CHỌN)
+              </label>
+              <div className="flex gap-3">
+                <input
+                  type="text"
+                  value={formData.popupImageUrl || ''}
+                  onChange={(e) => setFormData({ ...formData, popupImageUrl: e.target.value })}
+                  placeholder="https://... hoặc chọn từ thư viện"
+                  className="flex-1 bg-[#111] border border-[#444] focus:border-[#F27D26] p-2.5 text-white rounded focus:outline-none font-mono text-xs"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveMediaTarget('popupImage');
+                    setMediaPickerOpen(true);
+                  }}
+                  className="bg-[#2A2A2E] hover:bg-[#38383E] text-white px-4 font-medium rounded inline-flex items-center gap-1.5 cursor-pointer border border-[#444]"
+                >
+                  <Upload className="w-4 h-4 text-[#F27D26]" />
+                  <span>Chọn ảnh</span>
+                </button>
+              </div>
+
+              {formData.popupImageUrl && (
+                <div className="mt-3 max-w-sm rounded border border-[#333] overflow-hidden bg-black aspect-video relative">
+                  <img src={formData.popupImageUrl} alt="Popup preview" className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, popupImageUrl: '' })}
+                    className="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white p-1 rounded-full cursor-pointer"
+                    title="Xóa ảnh"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* CTA Button Settings */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-3 border-t border-[#2C2C32]">
+              <div>
+                <label className="block text-[#AAA] font-medium mb-1.5">
+                  CHỮ TRÊN NÚT HÀNH ĐỘNG (CTA TEXT)
+                </label>
+                <input
+                  type="text"
+                  value={typeof formData.popupCtaText === 'object' ? formData.popupCtaText?.vi : (formData.popupCtaText || 'NHẬN TƯ VẤN & BÁO GIÁ')}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    const cur = typeof formData.popupCtaText === 'object' ? formData.popupCtaText : { vi: '', en: '' };
+                    setFormData({ ...formData, popupCtaText: { vi: val, en: cur?.en || 'GET A QUOTE' } });
+                  }}
+                  placeholder="NHẬN TƯ VẤN & BÁO GIÁ"
+                  className="w-full bg-[#111] border border-[#444] focus:border-[#F27D26] p-2.5 text-white rounded focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[#AAA] font-medium mb-1.5">
+                  LINK KHI BẤM NÚT (CTA LINK)
+                </label>
+                <input
+                  type="text"
+                  value={formData.popupCtaLink || 'quote'}
+                  onChange={(e) => setFormData({ ...formData, popupCtaLink: e.target.value })}
+                  placeholder="quote (để mở form báo giá) hoặc /projects hoặc https://zalo.me/..."
+                  className="w-full bg-[#111] border border-[#444] focus:border-[#F27D26] p-2.5 text-white rounded focus:outline-none font-mono text-xs"
+                />
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        {/* 5. GENERAL COMPANY INFORMATION */}
         <div className="bg-[#181818] border border-[#2D2D2D] rounded-lg overflow-hidden shadow-xl">
           
           <div className="bg-[#202020] p-5 border-b border-[#2D2D2D] flex items-center gap-3">

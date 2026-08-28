@@ -213,6 +213,22 @@ export interface CompanySettings {
   ogImageUrl?: string;       // Social Share link preview image (1200x630px)
   ogTitle?: string;          // Social Share Title
   ogDescription?: string;    // Social Share Description
+
+  // Floating Quick Contact / Zalo
+  floatingZaloEnabled?: boolean;
+  zaloUrl?: string;          // Boss's Zalo link or phone e.g. https://zalo.me/090...
+  zaloLabel?: BilingualText | string;
+
+  // Promotional / Notice Popup Modal
+  popupEnabled?: boolean;
+  popupDelaySeconds?: number;
+  popupShowOnce?: boolean;
+  popupTitle?: BilingualText;
+  popupDescription?: BilingualText;
+  popupImageUrl?: string;
+  popupCtaText?: BilingualText;
+  popupCtaLink?: string;
+
   foundedYear?: string;
   activeSince?: string;
   activeStatement?: BilingualText;

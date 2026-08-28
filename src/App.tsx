@@ -8,6 +8,8 @@ import { Footer } from './components/public/Footer';
 import { QuoteModal } from './components/public/QuoteModal';
 import { DrawingViewerModal } from './components/public/DrawingViewerModal';
 import { IntroSplash } from './components/public/IntroSplash';
+import { FloatingContactWidget } from './components/public/FloatingContactWidget';
+import { PromoPopupModal } from './components/public/PromoPopupModal';
 
 // Public Pages
 import { HomePage } from './pages/public/HomePage';
@@ -255,6 +257,16 @@ const AppContent: React.FC = () => {
         onClose={() => setDrawingViewerOpen(false)}
         initialCategory={drawingViewerCategory}
       />
+
+      {/* Floating Quick Contact / Zalo Widget (Public Website) */}
+      {!isAdminRoute && (
+        <FloatingContactWidget openQuoteModal={openQuoteModal} />
+      )}
+
+      {/* Promotional & Notice Popup (Public Website) */}
+      {!isAdminRoute && (
+        <PromoPopupModal navigate={navigate} openQuoteModal={openQuoteModal} />
+      )}
 
     </div>
   );
