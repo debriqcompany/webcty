@@ -623,12 +623,19 @@ async function startServer() {
       immutable: true
     }));
 
-    // Static favicon, robots and root assets (excluding index.html)
-    app.use(express.static(distPath, {
-      index: false,
-      fallthrough: true,
-      extensions: ['svg', 'png', 'jpg', 'ico', 'webp', 'json', 'txt', 'xml', 'css', 'js']
-    }));
+    // Static favicon and public files
+    app.use((req, res, next) => {
+      // Do not serve index.html directly; let dynamic OpenGraph handler generate it
+      const p = req.path;
+      if (p === '/' || p === '/index.html' || p.startsWith('/articles') || p.startsWith('/projects') || p.startsWith('/insights') || p.startsWith('/services') || p.startsWith('/about') || p.startsWith('/partners') || p.startsWith('/join-debriq') || p.startsWith('/contact') || p.startsWith('/admin')) {
+        return next();
+      }
+      const filePath = path.join(distPath, p);
+      if (fs.existsSync(filePath) && fs.statSync(filePath).isFile() && !filePath.endsWith('.html')) {
+        return res.sendFile(filePath);
+      }
+      next();
+    });
 
     // Helper to clean and sanitize meta text
     function cleanMetaText(input: any, maxLen = 220): string {
