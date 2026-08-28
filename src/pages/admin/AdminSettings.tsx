@@ -139,6 +139,13 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ settings, refreshD
 
       if (!res.ok) throw new Error('Lỗi lưu cài đặt');
 
+      try {
+        sessionStorage.removeItem('debriq_popup_dismissed_img');
+        sessionStorage.removeItem('debriq_popup_dismissed');
+      } catch {
+        // ignore
+      }
+
       await refreshData();
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
@@ -675,15 +682,30 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ settings, refreshD
               </div>
             </div>
 
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={Boolean(formData.popupEnabled)}
-                onChange={(e) => setFormData({ ...formData, popupEnabled: e.target.checked })}
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-[#27272A] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#F27D26]"></div>
-            </label>
+            <div className="flex items-center gap-3">
+              {formData.popupImageUrl && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    window.dispatchEvent(new CustomEvent('debriq:open-popup'));
+                  }}
+                  className="bg-[#2A2A2E] hover:bg-[#38383E] text-white px-3 py-1.5 rounded text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer border border-[#555] shadow"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-[#F27D26]" />
+                  <span>Xem thử Popup</span>
+                </button>
+              )}
+
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={Boolean(formData.popupEnabled)}
+                  onChange={(e) => setFormData({ ...formData, popupEnabled: e.target.checked })}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-[#27272A] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#F27D26]"></div>
+              </label>
+            </div>
           </div>
 
           <div className="p-6 sm:p-8 space-y-6">

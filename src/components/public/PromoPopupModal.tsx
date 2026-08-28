@@ -12,9 +12,17 @@ export const PromoPopupModal: React.FC<PromoPopupModalProps> = ({ navigate, open
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
+    // Listen for preview events from Admin
+    const handleForceOpen = () => {
+      if (settings?.popupImageUrl) {
+        setIsOpen(true);
+      }
+    };
+    window.addEventListener('debriq:open-popup', handleForceOpen);
+
     // Must be enabled and have an image URL
     if (!settings?.popupEnabled || !settings?.popupImageUrl) {
-      return;
+      return () => window.removeEventListener('debriq:open-popup', handleForceOpen);
     }
 
     const now = Date.now();
@@ -23,7 +31,7 @@ export const PromoPopupModal: React.FC<PromoPopupModalProps> = ({ navigate, open
     if (settings.popupStartDate) {
       const startMs = new Date(settings.popupStartDate).getTime();
       if (!isNaN(startMs) && now < startMs) {
-        return;
+        return () => window.removeEventListener('debriq:open-popup', handleForceOpen);
       }
     }
 
@@ -31,26 +39,29 @@ export const PromoPopupModal: React.FC<PromoPopupModalProps> = ({ navigate, open
     if (settings.popupEndDate) {
       const endMs = new Date(settings.popupEndDate).getTime();
       if (!isNaN(endMs) && now > endMs) {
-        return;
+        return () => window.removeEventListener('debriq:open-popup', handleForceOpen);
       }
     }
 
-    // Check Show Once per session
+    // Check Show Once per session (associated with current image)
     try {
-      const isDismissed = sessionStorage.getItem('debriq_popup_dismissed');
-      if (settings.popupShowOnce !== false && isDismissed === 'true') {
-        return;
+      const dismissedImg = sessionStorage.getItem('debriq_popup_dismissed_img');
+      if (settings.popupShowOnce !== false && dismissedImg === settings.popupImageUrl) {
+        return () => window.removeEventListener('debriq:open-popup', handleForceOpen);
       }
     } catch {
       // ignore
     }
 
-    const delayMs = (settings.popupDelaySeconds ?? 3) * 1000;
+    const delayMs = Math.max(0, (settings.popupDelaySeconds ?? 2)) * 1000;
     const timer = setTimeout(() => {
       setIsOpen(true);
     }, delayMs);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('debriq:open-popup', handleForceOpen);
+    };
   }, [
     settings?.popupEnabled, 
     settings?.popupImageUrl, 
@@ -63,7 +74,9 @@ export const PromoPopupModal: React.FC<PromoPopupModalProps> = ({ navigate, open
   const handleClose = () => {
     setIsOpen(false);
     try {
-      sessionStorage.setItem('debriq_popup_dismissed', 'true');
+      if (settings?.popupImageUrl) {
+        sessionStorage.setItem('debriq_popup_dismissed_img', settings.popupImageUrl);
+      }
     } catch {
       // ignore
     }
@@ -83,13 +96,13 @@ export const PromoPopupModal: React.FC<PromoPopupModalProps> = ({ navigate, open
     }
   };
 
-  if (!isOpen || !settings?.popupEnabled || !settings?.popupImageUrl) return null;
+  if (!isOpen || !settings?.popupImageUrl) return null;
 
   const hasClickAction = Boolean(settings?.popupCtaLink);
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/75 backdrop-blur-sm animate-fade-in select-none"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/80 backdrop-blur-sm animate-fade-in select-none"
       onClick={handleClose}
     >
       {/* Container holding purely the custom PNG image and its clean close button */}
