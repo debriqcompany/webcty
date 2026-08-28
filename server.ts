@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
 import path from 'path';
+import fs from 'fs';
 import cookieParser from 'cookie-parser';
 import {
   initDb,
@@ -622,6 +623,18 @@ async function startServer() {
       index: false
     }));
 
+    // Helper to clean and sanitize meta text
+    function cleanMetaText(input: any, maxLen = 220): string {
+      if (!input) return '';
+      let str = typeof input === 'object' ? (input.vi || input.en || '') : String(input);
+      str = str.replace(/<[^>]*>/g, ' ');
+      str = str.replace(/\s+/g, ' ').trim();
+      if (str.length > maxLen) {
+        str = str.slice(0, maxLen).trim() + '...';
+      }
+      return str;
+    }
+
     // Dynamic HTML Response with OpenGraph Social Preview metadata injection
     app.get('*', (req, res) => {
       try {
@@ -633,64 +646,105 @@ async function startServer() {
         let html = fs.readFileSync(indexHtmlPath, 'utf-8');
         const settings = dbSettings.get() || ({} as any);
         const host = req.get('host') || 'debriq.vn';
-        const protocol = (req.headers['x-forwarded-proto'] as string) || req.protocol || 'https';
+        const isLocal = host.includes('localhost') || host.includes('127.0.0.1');
+        const baseUrl = isLocal ? `http://${host}` : 'https://debriq.vn';
         const urlPath = req.path || req.originalUrl || '/';
-        const fullUrl = `${protocol}://${host}${urlPath}`;
+        const fullUrl = `${baseUrl}${urlPath}`;
 
-        let ogTitle = settings.ogTitle || `${settings.displayName || 'DEBRIQ'} — Kỹ thuật thi công & Shopdrawing`;
-        let ogDesc = settings.ogDescription || settings.tagline || 'Giải pháp Shopdrawing kết cấu, hoàn thiện, BIM/Revit và biện pháp thi công chuẩn xác.';
-        let ogImage = settings.ogImageUrl || `${protocol}://${host}/placeholder-blueprint.svg`;
-        let favicon = settings.faviconUrl || '/favicon.svg';
+        const toAbsoluteUrl = (url?: string) => {
+          if (!url) return `${baseUrl}/uploads/general/DbqBanner-817e228e4a60c4d9.webp`;
+          if (url.startsWith('http://') || url.startsWith('https://')) return url;
+          return `${baseUrl}${url.startsWith('/') ? '' : '/'}${url}`;
+        };
 
-        // Check if route is a Project Detail
-        if (urlPath.startsWith('/projects/') && urlPath !== '/projects/') {
-          const slug = urlPath.replace('/projects/', '').split('/')[0].split('?')[0];
-          const project = dbProjects.getBySlug(slug);
-          if (project) {
-            ogTitle = `${typeof project.name === 'object' ? project.name.vi : project.name} — DEBRIQ ENGINEERING`;
-            ogDesc = typeof project.scope === 'object' ? project.scope.vi : (project.shortSummary?.vi || ogDesc);
-            if (project.heroImage) {
-              ogImage = project.heroImage.startsWith('http') ? project.heroImage : `${protocol}://${host}${project.heroImage.startsWith('/') ? '' : '/'}${project.heroImage}`;
-            }
-          }
-        }
-        // Check if route is an Article Detail
-        else if ((urlPath.startsWith('/insights/') || urlPath.startsWith('/articles/')) && urlPath !== '/insights/') {
-          const slug = urlPath.replace('/insights/', '').replace('/articles/', '').split('/')[0].split('?')[0];
+        let ogTitle = settings.ogTitle || 'DEBRIQ ENGINEERING — Kỹ thuật thi công & Shopdrawing chuẩn xác';
+        let ogDesc = settings.ogDescription || 'Giải pháp Shopdrawing kết cấu, hoàn thiện, BIM/Revit và biện pháp thi công cho tổng thầu và nhà thầu chuyên nghiệp.';
+        let ogImage = toAbsoluteUrl(settings.ogImageUrl || '/uploads/general/DbqBanner-817e228e4a60c4d9.webp');
+        let ogType = 'website';
+        let favicon = settings.faviconUrl ? toAbsoluteUrl(settings.faviconUrl) : `${baseUrl}/favicon.svg`;
+
+        // 1. Article / Insight Detail Route
+        const articleMatch = urlPath.match(/^\/(?:articles|insights)\/([^/?#]+)/);
+        if (articleMatch && articleMatch[1]) {
+          const slug = articleMatch[1];
           const article = dbArticles.getBySlug(slug);
           if (article) {
-            ogTitle = `${typeof article.title === 'object' ? article.title.vi : article.title} — DEBRIQ`;
-            ogDesc = typeof article.excerpt === 'object' ? article.excerpt.vi : ogDesc;
-            if (article.coverImage) {
-              ogImage = article.coverImage.startsWith('http') ? article.coverImage : `${protocol}://${host}${article.coverImage.startsWith('/') ? '' : '/'}${article.coverImage}`;
+            const articleTitle = cleanMetaText(article.title);
+            const articleExcerpt = cleanMetaText(article.excerpt) || cleanMetaText(article.contentHtml) || cleanMetaText(article.subtitle);
+            ogTitle = `${articleTitle} | DEBRIQ ENGINEERING`;
+            if (articleExcerpt) ogDesc = articleExcerpt;
+            if (article.coverImage || article.heroImage) {
+              ogImage = toAbsoluteUrl(article.coverImage || article.heroImage);
             }
+            ogType = 'article';
           }
         }
-
-        // Ensure absolute URL for ogImage
-        if (!ogImage.startsWith('http')) {
-          ogImage = `${protocol}://${host}${ogImage.startsWith('/') ? '' : '/'}${ogImage}`;
+        // 2. Project Detail Route
+        else if (urlPath.startsWith('/projects/') && urlPath !== '/projects/') {
+          const projectMatch = urlPath.match(/^\/projects\/([^/?#]+)/);
+          const slug = projectMatch ? projectMatch[1] : '';
+          const project = dbProjects.getBySlug(slug);
+          if (project) {
+            const prjName = cleanMetaText(project.name);
+            const prjDesc = cleanMetaText(project.scope) || cleanMetaText(project.subtitle) || cleanMetaText(project.technicalOverview);
+            ogTitle = `${prjName} — Hồ sơ Shopdrawing & Biện pháp | DEBRIQ`;
+            if (prjDesc) ogDesc = prjDesc;
+            if (project.heroImage) {
+              ogImage = toAbsoluteUrl(project.heroImage);
+            }
+            ogType = 'article';
+          }
+        }
+        // 3. Static Public Section Routes
+        else if (urlPath.startsWith('/projects')) {
+          ogTitle = 'Hồ sơ năng lực dự án thực tế | DEBRIQ ENGINEERING';
+          ogDesc = 'Tổng hợp các công trình DEBRIQ trực tiếp triển khai hồ sơ Shopdrawing kết cấu, hoàn thiện và BIM/Revit cho các tổng thầu lớn.';
+        } else if (urlPath.startsWith('/services')) {
+          ogTitle = 'Dịch vụ Kỹ thuật Shopdrawing & Biện pháp thi công | DEBRIQ';
+          ogDesc = 'Shopdrawing kết cấu bê tông, Shopdrawing hoàn thiện kiến trúc, Mô hình hóa BIM/Revit và Thiết kế biện pháp thi công.';
+        } else if (urlPath.startsWith('/articles') || urlPath.startsWith('/insights')) {
+          ogTitle = 'Góc nhìn Kỹ thuật & Kinh nghiệm Hiện trường | DEBRIQ';
+          ogDesc = 'Tổng hợp các bài viết chuyên sâu về kiểm soát cốt thép, giải pháp thi công, quy trình nghiệm thu và tối ưu hóa hồ sơ bản vẽ.';
+        } else if (urlPath.startsWith('/join-debriq')) {
+          ogTitle = 'Gia nhập Mạng lưới Kỹ sư Triển khai DEBRIQ';
+          ogDesc = 'Cơ hội hợp tác cùng DEBRIQ trong các dự án cao tầng, nhà ga hàng không và đại đô thị quy mô lớn trên toàn quốc.';
+        } else if (urlPath.startsWith('/contact')) {
+          ogTitle = 'Liên hệ Ban Điều Hành & Kỹ thuật | DEBRIQ ENGINEERING';
+          ogDesc = 'Kết nối trực tiếp cùng đội ngũ kỹ sư DEBRIQ để nhận tư vấn và báo giá triển khai hồ sơ thi công công trình.';
         }
 
-        // Clean out default tags from index.html
+        // Clean out default static tags from index.html
         html = html.replace(/<title>.*?<\/title>/gi, '');
         html = html.replace(/<meta\s+name=["']description["'][^>]*>/gi, '');
         html = html.replace(/<meta\s+property=["']og:[^"']*["'][^>]*>/gi, '');
         html = html.replace(/<meta\s+name=["']twitter:[^"']*["'][^>]*>/gi, '');
 
+        const safeTitle = ogTitle.replace(/"/g, '&quot;');
+        const safeDesc = ogDesc.replace(/"/g, '&quot;');
+
         const dynamicMeta = `
-    <title>${ogTitle}</title>
+    <title>${safeTitle}</title>
     <link rel="icon" href="${favicon}" />
-    <meta name="description" content="${ogDesc.replace(/"/g, '&quot;')}" />
-    <meta property="og:title" content="${ogTitle.replace(/"/g, '&quot;')}" />
-    <meta property="og:description" content="${ogDesc.replace(/"/g, '&quot;')}" />
-    <meta property="og:image" content="${ogImage}" />
+    <meta name="description" content="${safeDesc}" />
+    
+    <!-- Open Graph / Facebook / Zalo -->
+    <meta property="og:type" content="${ogType}" />
     <meta property="og:url" content="${fullUrl}" />
-    <meta property="og:type" content="website" />
+    <meta property="og:title" content="${safeTitle}" />
+    <meta property="og:description" content="${safeDesc}" />
+    <meta property="og:image" content="${ogImage}" />
+    <meta property="og:image:secure_url" content="${ogImage}" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="${safeTitle}" />
     <meta property="og:site_name" content="${settings.displayName || 'DEBRIQ ENGINEERING'}" />
+    <meta property="og:locale" content="vi_VN" />
+    
+    <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="${ogTitle.replace(/"/g, '&quot;')}" />
-    <meta name="twitter:description" content="${ogDesc.replace(/"/g, '&quot;')}" />
+    <meta name="twitter:url" content="${fullUrl}" />
+    <meta name="twitter:title" content="${safeTitle}" />
+    <meta name="twitter:description" content="${safeDesc}" />
     <meta name="twitter:image" content="${ogImage}" />`;
 
         html = html.replace('</head>', `${dynamicMeta}\n  </head>`);

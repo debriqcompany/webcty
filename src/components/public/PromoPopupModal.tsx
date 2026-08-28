@@ -12,7 +12,7 @@ export const PromoPopupModal: React.FC<PromoPopupModalProps> = ({ navigate, open
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    // Listen for preview events from Admin
+    // Listen for manual preview events from Admin
     const handleForceOpen = () => {
       if (settings?.popupImageUrl) {
         setIsOpen(true);
@@ -43,10 +43,11 @@ export const PromoPopupModal: React.FC<PromoPopupModalProps> = ({ navigate, open
       }
     }
 
-    // Check Show Once per session (associated with current image)
+    // Check if user already dismissed or clicked this popup (persisted in localStorage across all pages)
     try {
-      const dismissedImg = sessionStorage.getItem('debriq_popup_dismissed_img');
-      if (settings.popupShowOnce !== false && dismissedImg === settings.popupImageUrl) {
+      const dismissedImgLocal = localStorage.getItem('debriq_popup_dismissed_img');
+      const dismissedImgSession = sessionStorage.getItem('debriq_popup_dismissed_img');
+      if (settings.popupShowOnce !== false && (dismissedImgLocal === settings.popupImageUrl || dismissedImgSession === settings.popupImageUrl)) {
         return () => window.removeEventListener('debriq:open-popup', handleForceOpen);
       }
     } catch {
@@ -71,10 +72,11 @@ export const PromoPopupModal: React.FC<PromoPopupModalProps> = ({ navigate, open
     settings?.popupShowOnce
   ]);
 
-  const handleClose = () => {
+  const markDismissed = () => {
     setIsOpen(false);
     try {
       if (settings?.popupImageUrl) {
+        localStorage.setItem('debriq_popup_dismissed_img', settings.popupImageUrl);
         sessionStorage.setItem('debriq_popup_dismissed_img', settings.popupImageUrl);
       }
     } catch {
@@ -82,13 +84,20 @@ export const PromoPopupModal: React.FC<PromoPopupModalProps> = ({ navigate, open
     }
   };
 
+  const handleClose = () => {
+    markDismissed();
+  };
+
   const handleImageClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+    markDismissed();
+    
     if (settings?.popupCtaLink) {
-      handleClose();
       if (settings.popupCtaLink.startsWith('http')) {
+        // If external link, open in new tab
         window.open(settings.popupCtaLink, '_blank', 'noopener,noreferrer');
       } else if (settings.popupCtaLink.startsWith('/')) {
+        // Internal route navigation
         navigate(settings.popupCtaLink);
       } else if (settings.popupCtaLink === 'quote') {
         openQuoteModal();
