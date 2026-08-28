@@ -10,7 +10,30 @@ interface PartnersPageProps {
 
 export const PartnersPage: React.FC<PartnersPageProps> = ({ openQuoteModal }) => {
   const { lang, t } = useLanguage();
-  const { partners } = useData();
+  const { partners, pages } = useData();
+
+  const page = pages?.['partners'];
+
+  const titleStr = typeof page?.title === 'object'
+    ? (lang === 'vi' ? page.title.vi : (page.title.en || page.title.vi))
+    : (page?.title || (lang === 'vi' ? 'Đối tác & Khách hàng' : 'Partners & Clients'));
+
+  const subtitleStr = typeof page?.subtitle === 'object'
+    ? (lang === 'vi' ? page.subtitle.vi : (page.subtitle.en || page.subtitle.vi))
+    : (page?.subtitle || (lang === 'vi' ? 'HỆ THỐNG ĐỐI TÁC VÀ KHÁCH HÀNG' : 'CLIENTS & STRATEGIC PARTNERS'));
+
+  const descStr = typeof page?.description === 'object'
+    ? (lang === 'vi' ? page.description.vi : (page.description.en || page.description.vi))
+    : (page?.description || (lang === 'vi'
+        ? 'Minh bạch và chuẩn xác trong mối quan hệ hợp tác. DEBRIQ tự hào đồng hành cùng các tổng thầu hàng đầu và các nhà thầu chuyên ngành trên các đại công trình.'
+        : 'Transparent attribution and proven reliability. DEBRIQ collaborates with tier-1 main contractors and specialized engineering firms across landmark builds.'));
+
+  const contentHtmlStr = typeof page?.contentHtml === 'object'
+    ? (lang === 'vi' ? page.contentHtml.vi : (page.contentHtml.en || page.contentHtml.vi))
+    : (page?.contentHtml || '');
+
+  const heroImage = page?.heroImage || page?.bannerImage;
+  const galleryImages = page?.gallery || [];
 
   return (
     <div className="bg-[#F3F2EE] min-h-screen text-[#151515] font-display selection:bg-[#F27D26] selection:text-white">
@@ -20,19 +43,44 @@ export const PartnersPage: React.FC<PartnersPageProps> = ({ openQuoteModal }) =>
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
           <div className="max-w-3xl space-y-4">
             <span className="type-section-label">
-              // {lang === 'vi' ? 'HỆ THỐNG ĐỐI TÁC VÀ KHÁCH HÀNG' : 'CLIENTS & STRATEGIC PARTNERS'}
+              // {subtitleStr}
             </span>
             <h1 className="font-display text-4xl sm:text-6xl font-bold tracking-tight text-[#151515] leading-[1.05]">
-              {lang === 'vi' ? 'Đối tác & Khách hàng' : 'Partners & Clients'}
+              {titleStr}
             </h1>
             <p className="type-body-lg text-base sm:text-lg text-[#555] leading-relaxed font-sans">
-              {lang === 'vi'
-                ? 'Minh bạch và chuẩn xác trong mối quan hệ hợp tác. DEBRIQ tự hào đồng hành cùng các tổng thầu hàng đầu và các nhà thầu chuyên ngành trên các đại công trình.'
-                : 'Transparent attribution and proven reliability. DEBRIQ collaborates with tier-1 main contractors and specialized engineering firms across landmark builds.'}
+              {descStr}
             </p>
           </div>
         </div>
       </section>
+
+      {/* Prominent Hero Banner if uploaded */}
+      {heroImage && (
+        <section className="border-b border-[#D9D8D3] bg-[#18181C]">
+          <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 py-8 sm:py-12">
+            <div className="border border-[#333] rounded-xl overflow-hidden shadow-2xl">
+              <img
+                src={heroImage}
+                alt={titleStr}
+                className="w-full max-h-[500px] object-cover"
+              />
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Custom Narrative HTML from Admin (if added) */}
+      {contentHtmlStr && (
+        <section className="py-16 border-b border-[#D9D8D3] bg-white">
+          <div className="max-w-5xl mx-auto px-6 sm:px-8 lg:px-12">
+            <div 
+              className="prose prose-lg max-w-none font-sans text-[#333] leading-relaxed space-y-4"
+              dangerouslySetInnerHTML={{ __html: contentHtmlStr }}
+            />
+          </div>
+        </section>
+      )}
 
       {/* Ethics & Transparency Statement */}
       <section className="py-12 bg-[#F3F2EE] border-b border-[#D9D8D3]">
@@ -98,20 +146,18 @@ export const PartnersPage: React.FC<PartnersPageProps> = ({ openQuoteModal }) =>
                     </div>
                   </div>
 
-                  <p className="text-xs text-[#444] leading-relaxed font-sans">
+                  <p className="text-xs text-[#555] font-sans leading-relaxed">
                     {t(partner.description)}
                   </p>
                 </div>
 
                 {partner.projectRefs && partner.projectRefs.length > 0 && (
-                  <div className="border-t border-[#D9D8D3] pt-4 space-y-1 font-sans text-xs">
-                    <span className="type-meta-label text-[#767670] block mb-1">
-                      {lang === 'vi' ? 'DỰ ÁN TIÊU BIỂU PHỐI HỢP:' : 'PROJECT REFERENCES:'}
-                    </span>
-                    <div className="flex flex-wrap gap-1.5 pt-1">
-                      {partner.projectRefs.map((ref, i) => (
-                        <span key={i} className="bg-[#F3F2EE] border border-[#D9D8D3] px-2 py-0.5 text-xs text-[#151515] font-medium">
-                          {ref}
+                  <div className="border-t border-[#D9D8D3] pt-4">
+                    <span className="type-meta-label block mb-1">DỰ ÁN PHỐI HỢP TIÊU BIỂU:</span>
+                    <div className="flex flex-wrap gap-1">
+                      {partner.projectRefs.map((pref, pIdx) => (
+                        <span key={pIdx} className="bg-[#D9D8D3] text-[#151515] px-2 py-0.5 text-[10px] font-mono-tech font-bold">
+                          {pref}
                         </span>
                       ))}
                     </div>
@@ -124,26 +170,51 @@ export const PartnersPage: React.FC<PartnersPageProps> = ({ openQuoteModal }) =>
         </div>
       </section>
 
-      {/* CTA Box */}
-      <section className="py-20 bg-[#151515] text-[#F3F2EE]">
+      {/* Extra Image Gallery from Admin (if added) */}
+      {galleryImages.length > 0 && (
+        <section className="py-20 border-b border-[#D9D8D3] bg-[#F3F2EE]">
+          <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 space-y-8">
+            <div>
+              <span className="type-section-label block mb-1">
+                // {lang === 'vi' ? 'HÌNH ẢNH HỢP TÁC DỰ ÁN' : 'PROJECT COLLABORATION GALLERY'}
+              </span>
+              <h2 className="font-display text-3xl sm:text-4xl font-bold text-[#151515] tracking-tight">
+                {lang === 'vi' ? 'Hình ảnh hoạt động cùng đối tác' : 'Partnership in Action'}
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+              {galleryImages.map((img, idx) => (
+                <div key={idx} className="border border-[#D9D8D3] bg-white p-2 shadow-sm rounded-lg overflow-hidden group">
+                  <img
+                    src={img}
+                    alt={`Gallery ${idx + 1}`}
+                    className="w-full aspect-video object-cover group-hover:scale-105 transition-transform duration-300 rounded"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Call to Action Banner */}
+      <section className="py-20 bg-[#EAE9E4]">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 text-center space-y-6">
-          <span className="type-section-label text-[#F27D26] block">
-            // {lang === 'vi' ? 'HỢP TÁC KỸ THUẬT' : 'TECHNICAL COLLABORATION'}
+          <span className="type-section-label text-[#F27D26]">
+            // {lang === 'vi' ? 'KẾT NỐI HỢP TÁC' : 'BECOME A PARTNER'}
           </span>
-          <h2 className="font-display text-3xl sm:text-4xl font-bold tracking-tight text-white">
-            {lang === 'vi' ? 'Sẵn sàng đồng hành cùng gói thầu tiếp theo' : 'Ready for your next construction milestone'}
-          </h2>
-          <p className="text-sm sm:text-base text-[#A0A09A] max-w-xl mx-auto font-sans leading-relaxed">
+          <h2 className="font-display text-3xl sm:text-4xl font-bold text-[#151515] tracking-tight max-w-2xl mx-auto">
             {lang === 'vi'
-              ? 'DEBRIQ tiếp nhận yêu cầu báo giá và hỗ trợ rà soát sơ bộ hồ sơ thiết kế 24/7.'
-              : 'DEBRIQ provides 24/7 preliminary blueprint review and rapid quotation for general contractors.'}
-          </p>
-          <div className="pt-2">
+              ? 'Sẵn sàng đồng hành cùng dự án của bạn từ giai đoạn đấu thầu đến nghiệm thu.'
+              : 'Ready to partner from tender drawing stage to final site QA handover.'}
+          </h2>
+          <div>
             <button
               onClick={() => openQuoteModal()}
-              className="bg-[#F27D26] hover:bg-[#E06B15] text-white px-8 py-4 font-sans font-semibold text-xs uppercase tracking-wider inline-flex items-center gap-2 transition-colors cursor-pointer"
+              className="inline-flex items-center gap-2 bg-[#F27D26] hover:bg-[#D86616] text-white px-8 py-4 font-bold text-xs tracking-wider uppercase transition-colors cursor-pointer"
             >
-              <span>{lang === 'vi' ? 'Gửi yêu cầu báo giá' : 'Request a quote'}</span>
+              <span>{lang === 'vi' ? 'GỬI YÊU CẦU BÁO GIÁ DỰ ÁN' : 'REQUEST A PROJECT QUOTE'}</span>
               <ArrowUpRight className="w-4 h-4" />
             </button>
           </div>

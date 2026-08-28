@@ -11,7 +11,7 @@ interface FooterProps {
 
 export const Footer: React.FC<FooterProps> = ({ navigate, openQuoteModal }) => {
   const { lang } = useLanguage();
-  const { settings, partners } = useData();
+  const { settings, partners, services } = useData();
 
   const hotline = settings?.hotline || '0983 147 456';
   const email = settings?.email || 'contact@debriq.vn';
@@ -99,26 +99,43 @@ export const Footer: React.FC<FooterProps> = ({ navigate, openQuoteModal }) => {
                 {lang === 'vi' ? 'DỊCH VỤ CHUYÊN MÔN' : 'CORE SERVICES'}
               </h3>
               <ul className="space-y-2 text-sm text-[#A0A09A] font-sans">
-                <li>
-                  <button onClick={() => handleNav('/services')} className="hover:text-[#F27D26] transition-colors text-left cursor-pointer">
-                    {lang === 'vi' ? 'Shopdrawing kết cấu bê tông cốt thép' : 'Structural RC Shopdrawing'}
-                  </button>
-                </li>
-                <li>
-                  <button onClick={() => handleNav('/services')} className="hover:text-[#F27D26] transition-colors text-left cursor-pointer">
-                    {lang === 'vi' ? 'Shopdrawing hoàn thiện kiến trúc' : 'Architectural Finishing Shopdrawing'}
-                  </button>
-                </li>
-                <li>
-                  <button onClick={() => handleNav('/services')} className="hover:text-[#F27D26] transition-colors text-left cursor-pointer">
-                    {lang === 'vi' ? 'BIM / Revit & Kiểm soát xung đột' : 'BIM / Revit & Clash Coordination'}
-                  </button>
-                </li>
-                <li>
-                  <button onClick={() => handleNav('/services')} className="hover:text-[#F27D26] transition-colors text-left cursor-pointer">
-                    {lang === 'vi' ? 'Biện pháp thi công & Tầng hầm Top-down' : 'Construction Method Statements'}
-                  </button>
-                </li>
+                {services && services.length > 0 ? (
+                  services
+                    .filter(s => s.published !== false)
+                    .map((svc) => (
+                      <li key={svc.id}>
+                        <button 
+                          onClick={() => handleNav(`/services#${svc.slug}`)} 
+                          className="hover:text-[#F27D26] transition-colors text-left cursor-pointer line-clamp-1"
+                        >
+                          {typeof svc.title === 'object' ? (lang === 'vi' ? svc.title.vi : (svc.title.en || svc.title.vi)) : svc.title}
+                        </button>
+                      </li>
+                    ))
+                ) : (
+                  <>
+                    <li>
+                      <button onClick={() => handleNav('/services')} className="hover:text-[#F27D26] transition-colors text-left cursor-pointer">
+                        {lang === 'vi' ? 'Shopdrawing kết cấu bê tông cốt thép' : 'Structural RC Shopdrawing'}
+                      </button>
+                    </li>
+                    <li>
+                      <button onClick={() => handleNav('/services')} className="hover:text-[#F27D26] transition-colors text-left cursor-pointer">
+                        {lang === 'vi' ? 'Shopdrawing hoàn thiện kiến trúc' : 'Architectural Finishing Shopdrawing'}
+                      </button>
+                    </li>
+                    <li>
+                      <button onClick={() => handleNav('/services')} className="hover:text-[#F27D26] transition-colors text-left cursor-pointer">
+                        {lang === 'vi' ? 'BIM / Revit & Kiểm soát xung đột' : 'BIM / Revit & Clash Coordination'}
+                      </button>
+                    </li>
+                    <li>
+                      <button onClick={() => handleNav('/services')} className="hover:text-[#F27D26] transition-colors text-left cursor-pointer">
+                        {lang === 'vi' ? 'Biện pháp thi công & Tầng hầm Top-down' : 'Construction Method Statements'}
+                      </button>
+                    </li>
+                  </>
+                )}
               </ul>
             </div>
 

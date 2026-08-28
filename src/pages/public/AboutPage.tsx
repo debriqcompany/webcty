@@ -3,7 +3,10 @@ import { useLanguage } from '../../context/LanguageContext';
 import { useData } from '../../context/DataContext';
 import { 
   Users, 
-  Layers
+  Layers,
+  Building,
+  CheckCircle,
+  FileText
 } from 'lucide-react';
 
 interface AboutPageProps {
@@ -13,6 +16,30 @@ interface AboutPageProps {
 
 export const AboutPage: React.FC<AboutPageProps> = () => {
   const { lang } = useLanguage();
+  const { pages, settings } = useData();
+
+  const page = pages?.['about'];
+
+  const titleStr = typeof page?.title === 'object'
+    ? (lang === 'vi' ? page.title.vi : (page.title.en || page.title.vi))
+    : (page?.title || (lang === 'vi' ? 'Về chúng tôi — DEBRIQ' : 'About DEBRIQ Engineering'));
+
+  const subtitleStr = typeof page?.subtitle === 'object'
+    ? (lang === 'vi' ? page.subtitle.vi : (page.subtitle.en || page.subtitle.vi))
+    : (page?.subtitle || (lang === 'vi' ? 'HỒ SƠ NĂNG LỰC DOANH NGHIỆP' : 'COMPANY PROFILE & BACKGROUND'));
+
+  const descStr = typeof page?.description === 'object'
+    ? (lang === 'vi' ? page.description.vi : (page.description.en || page.description.vi))
+    : (page?.description || (lang === 'vi'
+        ? 'Đội ngũ kỹ sư chuyên sâu về Shopdrawing kết cấu, hoàn thiện, BIM/Revit và biện pháp thi công. Đồng hành cùng các nhà thầu và dự án lớn từ năm 2022.'
+        : 'Specialist engineering team dedicated to structural RC, finishing shopdrawings, BIM modeling, and constructability solutions since 2022.'));
+
+  const contentHtmlStr = typeof page?.contentHtml === 'object'
+    ? (lang === 'vi' ? page.contentHtml.vi : (page.contentHtml.en || page.contentHtml.vi))
+    : (page?.contentHtml || '');
+
+  const heroImage = page?.heroImage || page?.bannerImage;
+  const galleryImages = page?.gallery || [];
 
   return (
     <div className="bg-[#F3F2EE] min-h-screen text-[#151515] font-display selection:bg-[#F27D26] selection:text-white">
@@ -22,19 +49,44 @@ export const AboutPage: React.FC<AboutPageProps> = () => {
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
           <div className="max-w-3xl space-y-4">
             <span className="type-section-label">
-              // {lang === 'vi' ? 'HỒ SƠ NĂNG LỰC DOANH NGHIỆP' : 'COMPANY PROFILE & BACKGROUND'}
+              // {subtitleStr}
             </span>
             <h1 className="font-display text-4xl sm:text-6xl font-bold tracking-tight text-[#151515] leading-[1.05]">
-              {lang === 'vi' ? 'Về chúng tôi — DEBRIQ' : 'About DEBRIQ Engineering'}
+              {titleStr}
             </h1>
             <p className="type-body-lg text-base sm:text-lg text-[#555] leading-relaxed font-sans">
-              {lang === 'vi'
-                ? 'Đội ngũ kỹ sư chuyên sâu về Shopdrawing kết cấu, hoàn thiện, BIM/Revit và biện pháp thi công. Đồng hành cùng các nhà thầu và dự án lớn từ năm 2022.'
-                : 'Specialist engineering team dedicated to structural RC, finishing shopdrawings, BIM modeling, and constructability solutions since 2022.'}
+              {descStr}
             </p>
           </div>
         </div>
       </section>
+
+      {/* Prominent Hero Image (if uploaded via Admin) */}
+      {heroImage && (
+        <section className="border-b border-[#D9D8D3] bg-[#18181C]">
+          <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 py-8 sm:py-12">
+            <div className="border border-[#333] rounded-xl overflow-hidden shadow-2xl">
+              <img
+                src={heroImage}
+                alt={titleStr}
+                className="w-full max-h-[550px] object-cover"
+              />
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Custom Narrative HTML from Admin (if added) */}
+      {contentHtmlStr && (
+        <section className="py-16 border-b border-[#D9D8D3] bg-white">
+          <div className="max-w-5xl mx-auto px-6 sm:px-8 lg:px-12">
+            <div 
+              className="prose prose-lg max-w-none font-sans text-[#333] leading-relaxed space-y-4"
+              dangerouslySetInnerHTML={{ __html: contentHtmlStr }}
+            />
+          </div>
+        </section>
+      )}
 
       {/* Core Company Narrative & Founding History */}
       <section className="py-20 border-b border-[#D9D8D3]">
@@ -55,11 +107,15 @@ export const AboutPage: React.FC<AboutPageProps> = () => {
               <div className="p-5 bg-[#EAE9E4] border border-[#D9D8D3] space-y-3 font-sans text-xs">
                 <div>
                   <span className="type-meta-label block mb-0.5">TÊN PHÁP NHÂN ĐĂNG KÝ:</span>
-                  <span className="font-semibold text-[#151515] text-sm font-sans">CÔNG TY TNHH KỸ THUẬT DEBRIQ</span>
+                  <span className="font-semibold text-[#151515] text-sm font-sans">
+                    {settings?.legalName || 'CÔNG TY TNHH KỸ THUẬT DEBRIQ'}
+                  </span>
                 </div>
                 <div>
                   <span className="type-meta-label block mb-0.5">THỜI ĐIỂM HOẠT ĐỘNG:</span>
-                  <span className="font-medium text-[#151515]">Đội ngũ hoạt động từ năm 2022</span>
+                  <span className="font-medium text-[#151515]">
+                    {lang === 'vi' ? 'Đội ngũ hoạt động từ năm 2022' : 'Engineering team operating since 2022'}
+                  </span>
                 </div>
                 <div>
                   <span className="type-meta-label block mb-0.5">LĨNH VỰC TRỌNG TÂM:</span>
@@ -111,7 +167,9 @@ export const AboutPage: React.FC<AboutPageProps> = () => {
             <div className="bg-[#F3F2EE] border border-[#D9D8D3] p-8 space-y-6">
               <div className="flex justify-between items-start">
                 <div>
-                  <span className="font-display font-bold text-4xl text-[#151515]">5+</span>
+                  <span className="font-display font-bold text-4xl text-[#151515]">
+                    {settings?.teamCount || '5+'}
+                  </span>
                   <h3 className="font-display font-bold text-xl text-[#151515] mt-1">
                     {lang === 'vi' ? 'Kỹ sư nòng cốt' : 'Core Lead Engineers'}
                   </h3>
@@ -137,7 +195,9 @@ export const AboutPage: React.FC<AboutPageProps> = () => {
             <div className="bg-[#F3F2EE] border border-[#D9D8D3] p-8 space-y-6">
               <div className="flex justify-between items-start">
                 <div>
-                  <span className="font-display font-bold text-4xl text-[#F27D26]">25+</span>
+                  <span className="font-display font-bold text-4xl text-[#F27D26]">
+                    {settings?.collaboratorsCount || settings?.collaboratorCount || '25+'}
+                  </span>
                   <h3 className="font-display font-bold text-xl text-[#151515] mt-1">
                     {lang === 'vi' ? 'Cộng tác viên chuyên môn' : 'Specialist Collaborators'}
                   </h3>
@@ -163,6 +223,34 @@ export const AboutPage: React.FC<AboutPageProps> = () => {
 
         </div>
       </section>
+
+      {/* Extra Image Gallery from Admin (if added) */}
+      {galleryImages.length > 0 && (
+        <section className="py-20 border-b border-[#D9D8D3] bg-[#F3F2EE]">
+          <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 space-y-8">
+            <div>
+              <span className="type-section-label block mb-1">
+                // {lang === 'vi' ? 'HÌNH ẢNH HOẠT ĐỘNG & HIỆN TRƯỜNG' : 'FIELD & DRAWING GALLERY'}
+              </span>
+              <h2 className="font-display text-3xl sm:text-4xl font-bold text-[#151515] tracking-tight">
+                {lang === 'vi' ? 'Hình ảnh triển khai & Hồ sơ thực tế' : 'Field Execution & Deliverables'}
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+              {galleryImages.map((img, idx) => (
+                <div key={idx} className="border border-[#D9D8D3] bg-white p-2 shadow-sm rounded-lg overflow-hidden group">
+                  <img
+                    src={img}
+                    alt={`Gallery ${idx + 1}`}
+                    className="w-full aspect-video object-cover group-hover:scale-105 transition-transform duration-300 rounded"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Software & Technical Tools Standard */}
       <section className="py-20 border-b border-[#D9D8D3]">

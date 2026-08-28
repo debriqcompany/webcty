@@ -17,9 +17,20 @@ interface ServicesPageProps {
   openQuoteModal: (service?: string) => void;
 }
 
-export const ServicesPage: React.FC<ServicesPageProps> = ({ navigate, openQuoteModal }) => {
+export const ServicesPage: React.FC<ServicesPageProps> = ({ openQuoteModal }) => {
   const { lang } = useLanguage();
-  const { services } = useData();
+  const { services, pages } = useData();
+
+  const pageContent = pages?.['services'];
+  const pageTitle = typeof pageContent?.title === 'object' 
+    ? (lang === 'vi' ? pageContent.title.vi : (pageContent.title.en || pageContent.title.vi))
+    : (pageContent?.title || (lang === 'vi' ? 'DỊCH VỤ KỸ THUẬT' : 'TECHNICAL SERVICES'));
+    
+  const pageDesc = typeof pageContent?.metaDescription === 'object'
+    ? (lang === 'vi' ? pageContent.metaDescription.vi : pageContent.metaDescription.en)
+    : (lang === 'vi'
+        ? 'Giải pháp Shopdrawing kết cấu, hoàn thiện, mô hình thông tin công trình BIM/Revit và hồ sơ biện pháp thi công. Triển khai chuẩn xác theo tiến độ dự án.'
+        : 'Full-spectrum shopdrawing drafting, BIM modeling, and construction method engineering designed for high-density site execution.');
 
   const workflowSteps = [
     {
@@ -70,292 +81,166 @@ export const ServicesPage: React.FC<ServicesPageProps> = ({ navigate, openQuoteM
               // {lang === 'vi' ? 'NĂNG LỰC DỊCH VỤ CHUYÊN MÔN' : 'SPECIALIZED ENGINEERING CAPABILITIES'}
             </span>
             <h1 className="font-display text-4xl sm:text-6xl font-black tracking-tight text-[#151515] uppercase leading-none">
-              {lang === 'vi' ? 'DỊCH VỤ KỸ THUẬT' : 'TECHNICAL SERVICES'}
+              {pageTitle}
             </h1>
             <p className="font-sans text-lg text-[#555] leading-relaxed">
-              {lang === 'vi'
-                ? 'Giải pháp Shopdrawing kết cấu, hoàn thiện, mô hình thông tin công trình BIM/Revit và hồ sơ biện pháp thi công. Triển khai chuẩn xác theo tiến độ dự án.'
-                : 'Full-spectrum shopdrawing drafting, BIM modeling, and construction method engineering designed for high-density site execution.'}
+              {pageDesc}
             </p>
           </div>
         </div>
       </section>
 
-      {/* 4 Core Services In-Depth Sections */}
+      {/* Dynamic Services In-Depth Sections */}
       <section className="py-16 sm:py-20 border-b border-[#D9D8D3]">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 space-y-24">
           
-          {/* Service 1: Structural RC */}
-          <div id="structural" className="scroll-mt-28">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-              
-              <div className="lg:col-span-6 space-y-6">
-                <div className="flex items-center gap-3">
-                  <span className="font-mono-tech text-xs bg-[#F27D26] text-white px-2.5 py-1 font-bold">
-                    SERVICE // 01
-                  </span>
-                  <span className="font-mono-tech text-xs text-[#8D8D88] uppercase">
-                    AutoCAD • KataPro • Revit
-                  </span>
-                </div>
+          {services && services.length > 0 ? (
+            services
+              .filter(s => s.published !== false)
+              .map((svc, idx) => {
+                const titleStr = typeof svc.title === 'object' 
+                  ? (lang === 'vi' ? svc.title.vi : (svc.title.en || svc.title.vi)) 
+                  : (svc.title || '');
 
-                <h2 className="font-display text-3xl sm:text-4xl font-extrabold uppercase tracking-tight text-[#151515]">
-                  {lang === 'vi' ? 'Shopdrawing Kết Cấu Bê Tông Cốt Thép' : 'Reinforced Concrete Structural Shopdrawing'}
-                </h2>
+                const descStr = typeof svc.description === 'object' 
+                  ? (lang === 'vi' ? svc.description.vi : (svc.description.en || svc.description.vi))
+                  : (typeof svc.subtitle === 'object' 
+                      ? (lang === 'vi' ? svc.subtitle.vi : svc.subtitle.en) 
+                      : (svc.description || svc.subtitle || ''));
+                
+                const toolsList = (svc.tools || svc.toolsUsed || ['AutoCAD', 'Revit']).join(' • ');
+                const isEven = idx % 2 === 1;
 
-                <p className="font-sans text-base sm:text-lg text-[#333] leading-relaxed">
-                  {lang === 'vi'
-                    ? 'Triển khai bản vẽ Shopdrawing kết cấu phục vụ gia công cốt thép và đổ bê tông trực tiếp tại công trường. Hồ sơ tuân thủ tiêu chuẩn TCVN 5574:2018, bảo đảm tính khả thi thi công tại các nút giao rebar mật độ cao.'
-                    : 'Field-ready structural reinforced concrete shopdrawings conforming to TCVN 5574:2018. Designed to eliminate rebar congestion at dense beam-column intersections.'}
-                </p>
+                // Deliverables parsing
+                let deliverableItems: string[] = [];
+                if (Array.isArray(svc.deliverables)) {
+                  deliverableItems = svc.deliverables.map(d => typeof d === 'object' ? (lang === 'vi' ? d.vi : (d.en || d.vi)) : String(d));
+                } else if (svc.deliverables && typeof svc.deliverables === 'object') {
+                  const delivObj = svc.deliverables as any;
+                  deliverableItems = delivObj[lang] || delivObj.vi || [];
+                }
 
-                <div className="space-y-3 font-mono-tech text-xs text-[#444] bg-[#EAE9E4] p-5 border border-[#D9D8D3]">
-                  <span className="font-bold text-[#151515] uppercase block mb-1">
-                    {lang === 'vi' ? 'HỒ SƠ BÀN GIAO BAO GỒM:' : 'STANDARD DELIVERABLES:'}
-                  </span>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    <div className="flex items-start gap-2">
-                      <Check className="w-4 h-4 text-[#F27D26] shrink-0 mt-0.5" />
-                      <span>Shopdrawing móng, đài cọc, giằng móng</span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <Check className="w-4 h-4 text-[#F27D26] shrink-0 mt-0.5" />
-                      <span>Shopdrawing cột, vách thang máy</span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <Check className="w-4 h-4 text-[#F27D26] shrink-0 mt-0.5" />
-                      <span>Shopdrawing dầm, sàn ứng lực / RC</span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <Check className="w-4 h-4 text-[#F27D26] shrink-0 mt-0.5" />
-                      <span>Bảng thống kê thép (BBS) tối ưu cắt</span>
-                    </div>
-                  </div>
-                </div>
+                if (deliverableItems.length === 0) {
+                  deliverableItems = [
+                    lang === 'vi' ? 'Hồ sơ bản vẽ chi tiết DWG / PDF chuẩn xác' : 'Accurate detailed DWG / PDF blueprint sets',
+                    lang === 'vi' ? 'Bảng thống kê vật liệu bóc tách chi tiết' : 'Detailed material take-off & schedule',
+                    lang === 'vi' ? 'Rà soát xung đột và lập RFI gửi TVGS' : 'Clash coordination and technical RFI log',
+                    lang === 'vi' ? 'Đồng hành giải trình và hỗ trợ nghiệm thu' : 'Supervision drawing defence & field QA support'
+                  ];
+                }
 
-                <div>
-                  <button
-                    onClick={() => openQuoteModal('Shopdrawing kết cấu')}
-                    className="inline-flex items-center gap-2 bg-[#151515] hover:bg-[#F27D26] text-white px-6 py-3.5 font-bold text-xs tracking-wider uppercase transition-colors cursor-pointer"
-                  >
-                    <span>{lang === 'vi' ? 'YÊU CẦU BÁO GIÁ KẾT CẤU' : 'REQUEST STRUCTURAL QUOTE'}</span>
-                    <ArrowUpRight className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
+                const renderVisual = () => {
+                  switch (svc.visualType) {
+                    case 'finishing':
+                      return <TechnicalFinishingDetail />;
+                    case 'bim':
+                      return <TechnicalBimClashNode />;
+                    case 'method':
+                      return <TechnicalBasementMethod />;
+                    case 'structural':
+                    default:
+                      return <TechnicalDrawingBeamRebar />;
+                  }
+                };
 
-              <div className="lg:col-span-6">
-                <div className="border-2 border-[#151515] bg-[#181818] p-2 shadow-xl">
-                  <TechnicalDrawingBeamRebar />
-                </div>
-              </div>
+                return (
+                  <div key={svc.id || idx} id={svc.slug} className={`scroll-mt-28 ${idx > 0 ? 'border-t border-[#D9D8D3] pt-20' : ''}`}>
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+                      
+                      <div className={`lg:col-span-6 space-y-6 ${isEven ? 'lg:order-2' : ''}`}>
+                        <div className="flex items-center gap-3">
+                          <span className="font-mono-tech text-xs bg-[#F27D26] text-white px-2.5 py-1 font-bold">
+                            SERVICE // 0{idx + 1}
+                          </span>
+                          <span className="font-mono-tech text-xs text-[#8D8D88] uppercase">
+                            {toolsList}
+                          </span>
+                        </div>
 
-            </div>
-          </div>
+                        <h2 className="font-display text-3xl sm:text-4xl font-extrabold uppercase tracking-tight text-[#151515]">
+                          {titleStr}
+                        </h2>
 
-          {/* Service 2: Finishing */}
-          <div id="finishing" className="scroll-mt-28 border-t border-[#D9D8D3] pt-20">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-              
-              <div className="lg:col-span-6 lg:order-2 space-y-6">
-                <div className="flex items-center gap-3">
-                  <span className="font-mono-tech text-xs bg-[#F27D26] text-white px-2.5 py-1 font-bold">
-                    SERVICE // 02
-                  </span>
-                  <span className="font-mono-tech text-xs text-[#8D8D88] uppercase">
-                    AutoCAD • Architectural Drafting
-                  </span>
-                </div>
+                        {descStr && (
+                          <p className="font-sans text-base sm:text-lg text-[#333] leading-relaxed">
+                            {descStr}
+                          </p>
+                        )}
 
-                <h2 className="font-display text-3xl sm:text-4xl font-extrabold uppercase tracking-tight text-[#151515]">
-                  {lang === 'vi' ? 'Shopdrawing Hoàn Thiện Kiến Trúc' : 'Architectural Finishing Shopdrawing'}
-                </h2>
+                        <div className="space-y-3 font-mono-tech text-xs text-[#444] bg-[#EAE9E4] p-5 border border-[#D9D8D3]">
+                          <span className="font-bold text-[#151515] uppercase block mb-1">
+                            {lang === 'vi' ? 'HỒ SƠ BÀN GIAO BAO GỒM:' : 'STANDARD DELIVERABLES:'}
+                          </span>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            {deliverableItems.map((item, dIdx) => (
+                              <div key={dIdx} className="flex items-start gap-2">
+                                <Check className="w-4 h-4 text-[#F27D26] shrink-0 mt-0.5" />
+                                <span>{item}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
 
-                <p className="font-sans text-base sm:text-lg text-[#333] leading-relaxed">
-                  {lang === 'vi'
-                    ? 'Triển khai chi tiết từng lớp hoàn thiện cho các công trình cao ốc, đại đô thị và khách sạn cao cấp. Kiểm soát mốc cao độ sàn, mạch ốp lát, khe co giãn và liên kết vật liệu.'
-                    : 'Millimeter-grade detailing of all architectural finishes: masonry layouts, screed slopes, tile modulation grids, suspended ceiling framing, and waterproofing upstands.'}
-                </p>
+                        <div>
+                          <button
+                            onClick={() => openQuoteModal(titleStr)}
+                            className="inline-flex items-center gap-2 bg-[#151515] hover:bg-[#F27D26] text-white px-6 py-3.5 font-bold text-xs tracking-wider uppercase transition-colors cursor-pointer"
+                          >
+                            <span>{lang === 'vi' ? `YÊU CẦU BÁO GIÁ ${titleStr.toUpperCase()}` : `REQUEST ${titleStr.toUpperCase()} QUOTE`}</span>
+                            <ArrowUpRight className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
 
-                <div className="space-y-3 font-mono-tech text-xs text-[#444] bg-[#EAE9E4] p-5 border border-[#D9D8D3]">
-                  <span className="font-bold text-[#151515] uppercase block mb-1">
-                    {lang === 'vi' ? 'HỒ SƠ BÀN GIAO BAO GỒM:' : 'STANDARD DELIVERABLES:'}
-                  </span>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    <div className="flex items-start gap-2">
-                      <Check className="w-4 h-4 text-[#F27D26] shrink-0 mt-0.5" />
-                      <span>Định vị tường xây, lanh-tô, bổ trụ</span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <Check className="w-4 h-4 text-[#F27D26] shrink-0 mt-0.5" />
-                      <span>Mặt bằng chia ron gạch & mốc ốp lát</span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <Check className="w-4 h-4 text-[#F27D26] shrink-0 mt-0.5" />
-                      <span>Chi tiết trần thạch cao & khe hắt</span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <Check className="w-4 h-4 text-[#F27D26] shrink-0 mt-0.5" />
-                      <span>Chi tiết chống thấm & len chân tường</span>
+                      <div className={`lg:col-span-6 ${isEven ? 'lg:order-1' : ''}`}>
+                        <div className="border-2 border-[#151515] bg-[#181818] p-2 shadow-xl">
+                          {renderVisual()}
+                        </div>
+                      </div>
+
                     </div>
                   </div>
-                </div>
-
-                <div>
-                  <button
-                    onClick={() => openQuoteModal('Shopdrawing hoàn thiện')}
-                    className="inline-flex items-center gap-2 bg-[#151515] hover:bg-[#F27D26] text-white px-6 py-3.5 font-bold text-xs tracking-wider uppercase transition-colors cursor-pointer"
-                  >
-                    <span>{lang === 'vi' ? 'YÊU CẦU BÁO GIÁ HOÀN THIỆN' : 'REQUEST FINISHING QUOTE'}</span>
-                    <ArrowUpRight className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-
-              <div className="lg:col-span-6 lg:order-1">
-                <div className="border-2 border-[#151515] bg-[#181818] p-2 shadow-xl">
-                  <TechnicalFinishingDetail />
-                </div>
-              </div>
-
-            </div>
-          </div>
-
-          {/* Service 3: BIM / Revit */}
-          <div id="bim" className="scroll-mt-28 border-t border-[#D9D8D3] pt-20">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-              
-              <div className="lg:col-span-6 space-y-6">
-                <div className="flex items-center gap-3">
-                  <span className="font-mono-tech text-xs bg-[#F27D26] text-white px-2.5 py-1 font-bold">
-                    SERVICE // 03
-                  </span>
-                  <span className="font-mono-tech text-xs text-[#8D8D88] uppercase">
-                    Revit • Navisworks • BIM 360
-                  </span>
-                </div>
-
-                <h2 className="font-display text-3xl sm:text-4xl font-extrabold uppercase tracking-tight text-[#151515]">
-                  {lang === 'vi' ? 'Dịch Vụ BIM / Revit & Kiểm Soát Xung Đột' : 'BIM / Revit & Clash Detection'}
-                </h2>
-
-                <p className="font-sans text-base sm:text-lg text-[#333] leading-relaxed">
-                  {lang === 'vi'
-                    ? 'Dựng mô hình thông tin công trình BIM (LOD 300 - LOD 350) cho phần Kết cấu và Kiến trúc. Rà soát phát hiện xung đột không gian với hệ thống Cơ điện (MEP) trước khi thi công thực tế.'
-                    : 'BIM modeling at LOD 300-350 for Structure and Architecture. Navisworks multi-trade clash detection ensuring zero spatial collisions on site.'}
-                </p>
-
-                <div className="space-y-3 font-mono-tech text-xs text-[#444] bg-[#EAE9E4] p-5 border border-[#D9D8D3]">
-                  <span className="font-bold text-[#151515] uppercase block mb-1">
-                    {lang === 'vi' ? 'HỒ SƠ BÀN GIAO BAO GỒM:' : 'STANDARD DELIVERABLES:'}
-                  </span>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    <div className="flex items-start gap-2">
-                      <Check className="w-4 h-4 text-[#F27D26] shrink-0 mt-0.5" />
-                      <span>Model Revit Structure & Architecture LOD 350</span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <Check className="w-4 h-4 text-[#F27D26] shrink-0 mt-0.5" />
-                      <span>Báo cáo va chạm Navisworks Clash Report</span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <Check className="w-4 h-4 text-[#F27D26] shrink-0 mt-0.5" />
-                      <span>Bản vẽ 2D xuất trực tiếp từ Revit</span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <Check className="w-4 h-4 text-[#F27D26] shrink-0 mt-0.5" />
-                      <span>Bóc tách khối lượng tham số từ Model</span>
-                    </div>
+                );
+              })
+          ) : (
+            /* Fallback default service */
+            <div id="structural" className="scroll-mt-28">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+                <div className="lg:col-span-6 space-y-6">
+                  <div className="flex items-center gap-3">
+                    <span className="font-mono-tech text-xs bg-[#F27D26] text-white px-2.5 py-1 font-bold">
+                      SERVICE // 01
+                    </span>
+                    <span className="font-mono-tech text-xs text-[#8D8D88] uppercase">
+                      AutoCAD • KataPro • Revit
+                    </span>
+                  </div>
+                  <h2 className="font-display text-3xl sm:text-4xl font-extrabold uppercase tracking-tight text-[#151515]">
+                    {lang === 'vi' ? 'Shopdrawing Kết Cấu Bê Tông Cốt Thép' : 'Reinforced Concrete Structural Shopdrawing'}
+                  </h2>
+                  <p className="font-sans text-base sm:text-lg text-[#333] leading-relaxed">
+                    {lang === 'vi'
+                      ? 'Triển khai bản vẽ Shopdrawing kết cấu phục vụ gia công cốt thép và đổ bê tông trực tiếp tại công trường.'
+                      : 'Field-ready structural reinforced concrete shopdrawings conforming to TCVN 5574:2018.'}
+                  </p>
+                  <div>
+                    <button
+                      onClick={() => openQuoteModal('Shopdrawing kết cấu')}
+                      className="inline-flex items-center gap-2 bg-[#151515] hover:bg-[#F27D26] text-white px-6 py-3.5 font-bold text-xs tracking-wider uppercase transition-colors cursor-pointer"
+                    >
+                      <span>{lang === 'vi' ? 'YÊU CẦU BÁO GIÁ KẾT CẤU' : 'REQUEST STRUCTURAL QUOTE'}</span>
+                      <ArrowUpRight className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
-
-                <div>
-                  <button
-                    onClick={() => openQuoteModal('BIM / Revit')}
-                    className="inline-flex items-center gap-2 bg-[#151515] hover:bg-[#F27D26] text-white px-6 py-3.5 font-bold text-xs tracking-wider uppercase transition-colors cursor-pointer"
-                  >
-                    <span>{lang === 'vi' ? 'YÊU CẦU BÁO GIÁ BIM/REVIT' : 'REQUEST BIM QUOTE'}</span>
-                    <ArrowUpRight className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-
-              <div className="lg:col-span-6">
-                <div className="border-2 border-[#151515] bg-[#181818] p-2 shadow-xl">
-                  <TechnicalBimClashNode />
-                </div>
-              </div>
-
-            </div>
-          </div>
-
-          {/* Service 4: Construction Method */}
-          <div id="method" className="scroll-mt-28 border-t border-[#D9D8D3] pt-20">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-              
-              <div className="lg:col-span-6 lg:order-2 space-y-6">
-                <div className="flex items-center gap-3">
-                  <span className="font-mono-tech text-xs bg-[#F27D26] text-white px-2.5 py-1 font-bold">
-                    SERVICE // 04
-                  </span>
-                  <span className="font-mono-tech text-xs text-[#8D8D88] uppercase">
-                    AutoCAD • Construction Engineering
-                  </span>
-                </div>
-
-                <h2 className="font-display text-3xl sm:text-4xl font-extrabold uppercase tracking-tight text-[#151515]">
-                  {lang === 'vi' ? 'Biện Pháp Thi Công & Tầng Hầm Top-down' : 'Construction Method Statements & Top-down'}
-                </h2>
-
-                <p className="font-sans text-base sm:text-lg text-[#333] leading-relaxed">
-                  {lang === 'vi'
-                    ? 'Lập hồ sơ biện pháp thi công cho phần ngầm phức tạp (Semi Top-down, Top-down, Kingpost, Strutting) và biện pháp thi công thân công trình cao tầng.'
-                    : 'Method statements and engineered shopdrawings for deep basements, diaphragm walls, steel strutting, and site logistics planning.'}
-                </p>
-
-                <div className="space-y-3 font-mono-tech text-xs text-[#444] bg-[#EAE9E4] p-5 border border-[#D9D8D3]">
-                  <span className="font-bold text-[#151515] uppercase block mb-1">
-                    {lang === 'vi' ? 'HỒ SƠ BÀN GIAO BAO GỒM:' : 'STANDARD DELIVERABLES:'}
-                  </span>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    <div className="flex items-start gap-2">
-                      <Check className="w-4 h-4 text-[#F27D26] shrink-0 mt-0.5" />
-                      <span>Biện pháp đào hầm & hệ shoring/kingpost</span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <Check className="w-4 h-4 text-[#F27D26] shrink-0 mt-0.5" />
-                      <span>Mặt bằng bố trí cẩu tháp & vận thăng</span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <Check className="w-4 h-4 text-[#F27D26] shrink-0 mt-0.5" />
-                      <span>Sơ đồ phân đợt đổ bê tông khối lớn</span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <Check className="w-4 h-4 text-[#F27D26] shrink-0 mt-0.5" />
-                      <span>Hệ giàn giáo bao che & an toàn lao động</span>
-                    </div>
+                <div className="lg:col-span-6">
+                  <div className="border-2 border-[#151515] bg-[#181818] p-2 shadow-xl">
+                    <TechnicalDrawingBeamRebar />
                   </div>
                 </div>
-
-                <div>
-                  <button
-                    onClick={() => openQuoteModal('Biện pháp thi công')}
-                    className="inline-flex items-center gap-2 bg-[#151515] hover:bg-[#F27D26] text-white px-6 py-3.5 font-bold text-xs tracking-wider uppercase transition-colors cursor-pointer"
-                  >
-                    <span>{lang === 'vi' ? 'YÊU CẦU BÁO GIÁ BIỆN PHÁP' : 'REQUEST METHOD QUOTE'}</span>
-                    <ArrowUpRight className="w-4 h-4" />
-                  </button>
-                </div>
               </div>
-
-              <div className="lg:col-span-6 lg:order-1">
-                <div className="border-2 border-[#151515] bg-[#181818] p-2 shadow-xl">
-                  <TechnicalBasementMethod />
-                </div>
-              </div>
-
             </div>
-          </div>
+          )}
 
         </div>
       </section>

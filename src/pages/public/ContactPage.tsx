@@ -8,7 +8,8 @@ import {
   Send, 
   CheckCircle, 
   AlertCircle, 
-  Clock
+  Clock,
+  ArrowUpRight
 } from 'lucide-react';
 
 interface ContactPageProps {
@@ -17,11 +18,36 @@ interface ContactPageProps {
 
 export const ContactPage: React.FC<ContactPageProps> = () => {
   const { lang } = useLanguage();
-  const { settings } = useData();
+  const { settings, pages } = useData();
+
+  const page = pages?.['contact'];
+
+  const titleStr = typeof page?.title === 'object'
+    ? (lang === 'vi' ? page.title.vi : (page.title.en || page.title.vi))
+    : (page?.title || (lang === 'vi' ? 'Liên hệ DEBRIQ' : 'Contact DEBRIQ'));
+
+  const subtitleStr = typeof page?.subtitle === 'object'
+    ? (lang === 'vi' ? page.subtitle.vi : (page.subtitle.en || page.subtitle.vi))
+    : (page?.subtitle || (lang === 'vi' ? 'KẾT NỐI VÀ HỢP TÁC KỸ THUẬT' : 'GET IN TOUCH & HEADQUARTERS'));
+
+  const descStr = typeof page?.description === 'object'
+    ? (lang === 'vi' ? page.description.vi : (page.description.en || page.description.vi))
+    : (page?.description || (lang === 'vi'
+        ? 'Đội ngũ kỹ sư DEBRIQ luôn sẵn sàng lắng nghe yêu cầu và đề xuất giải pháp triển khai hồ sơ phù hợp nhất cho dự án của bạn.'
+        : 'DEBRIQ lead engineers are available to review project requirements and coordinate drawings delivery.'));
+
+  const contentHtmlStr = typeof page?.contentHtml === 'object'
+    ? (lang === 'vi' ? page.contentHtml.vi : (page.contentHtml.en || page.contentHtml.vi))
+    : (page?.contentHtml || '');
+
+  const heroImage = page?.heroImage || page?.bannerImage;
+  const galleryImages = page?.gallery || [];
 
   const hotline = settings?.hotline || '0983 147 456';
   const email = settings?.email || 'contact@debriq.vn';
   const address = settings?.address || '71 Quốc Lộ 13, Tổ 2, Khu Phố Bàu Bàng, Xã Bàu Bàng, Thành phố Hồ Chí Minh';
+  const rawZalo = settings?.zaloUrl || settings?.zalo || '0983147456';
+  const zaloHref = rawZalo.startsWith('http') ? rawZalo : `https://zalo.me/${rawZalo.replace(/[^0-9]/g, '')}`;
 
   const [formData, setFormData] = useState({
     fullName: '',
@@ -77,19 +103,44 @@ export const ContactPage: React.FC<ContactPageProps> = () => {
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
           <div className="max-w-3xl space-y-4">
             <span className="type-section-label">
-              // {lang === 'vi' ? 'KẾT NỐI VÀ HỢP TÁC' : 'GET IN TOUCH & HEADQUARTERS'}
+              // {subtitleStr}
             </span>
             <h1 className="font-display text-4xl sm:text-6xl font-bold tracking-tight text-[#151515] leading-[1.05]">
-              {lang === 'vi' ? 'Liên hệ DEBRIQ' : 'Contact DEBRIQ'}
+              {titleStr}
             </h1>
             <p className="type-body-lg text-base sm:text-lg text-[#555] leading-relaxed font-sans">
-              {lang === 'vi'
-                ? 'Đội ngũ kỹ sư DEBRIQ luôn sẵn sàng lắng nghe yêu cầu và đề xuất giải pháp triển khai hồ sơ phù hợp nhất cho dự án của bạn.'
-                : 'DEBRIQ lead engineers are available to review project requirements and coordinate drawings delivery.'}
+              {descStr}
             </p>
           </div>
         </div>
       </section>
+
+      {/* Prominent Hero Banner / Office Image if uploaded */}
+      {heroImage && (
+        <section className="border-b border-[#D9D8D3] bg-[#18181C]">
+          <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 py-8 sm:py-12">
+            <div className="border border-[#333] rounded-xl overflow-hidden shadow-2xl">
+              <img
+                src={heroImage}
+                alt={titleStr}
+                className="w-full max-h-[500px] object-cover"
+              />
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Custom Narrative HTML from Admin (if added) */}
+      {contentHtmlStr && (
+        <section className="py-16 border-b border-[#D9D8D3] bg-white">
+          <div className="max-w-5xl mx-auto px-6 sm:px-8 lg:px-12">
+            <div 
+              className="prose prose-lg max-w-none font-sans text-[#333] leading-relaxed space-y-4"
+              dangerouslySetInnerHTML={{ __html: contentHtmlStr }}
+            />
+          </div>
+        </section>
+      )}
 
       {/* Main Directory & Contact Form Grid */}
       <section className="py-20 border-b border-[#D9D8D3]">
@@ -102,68 +153,112 @@ export const ContactPage: React.FC<ContactPageProps> = () => {
               
               <div>
                 <span className="type-section-label block mb-1">
-                  // {lang === 'vi' ? 'THÔNG TIN PHÁP NHÂN' : 'CORPORATE CREDENTIALS'}
+                  // {lang === 'vi' ? 'TRỤ SỞ & LIÊN LẠC TRỰC TIẾP' : 'HEADQUARTERS & DESK'}
                 </span>
                 <h2 className="font-display text-2xl sm:text-3xl font-bold text-[#151515] tracking-tight">
-                  CÔNG TY TNHH KỸ THUẬT DEBRIQ
+                  {lang === 'vi' ? 'Thông tin liên hệ chính thức' : 'Official Contact Channels'}
                 </h2>
-                <p className="font-sans text-xs text-[#767670] mt-1 uppercase font-medium">
-                  DEBRIQ ENGINEERING COMPANY LIMITED
-                </p>
               </div>
 
-              <div className="space-y-6 font-sans text-xs">
+              <div className="space-y-6 font-sans">
                 
-                {/* Phone / Hotline */}
-                <div className="p-4 bg-[#EAE9E4] border border-[#D9D8D3] flex items-start gap-4">
-                  <div className="p-2.5 bg-[#151515] text-[#F27D26]">
-                    <Phone className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <span className="type-meta-label block">{lang === 'vi' ? 'HOTLINE / ZALO KỸ THUẬT' : 'TECHNICAL HOTLINE / ZALO'}</span>
-                    <a href={`tel:${hotline.replace(/\s/g, '')}`} className="text-base font-bold text-[#151515] hover:text-[#F27D26] block mt-0.5 font-mono-tech">
-                      {hotline}
-                    </a>
-                    <span className="text-xs text-[#767670]">{lang === 'vi' ? 'Hỗ trợ tư vấn báo giá dự án 24/7' : '24/7 Drawing review support'}</span>
-                  </div>
-                </div>
-
-                {/* Email */}
-                <div className="p-4 bg-[#EAE9E4] border border-[#D9D8D3] flex items-start gap-4">
-                  <div className="p-2.5 bg-[#151515] text-[#F27D26]">
-                    <Mail className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <span className="type-meta-label block">{lang === 'vi' ? 'EMAIL TIẾP NHẬN HỒ SƠ' : 'OFFICIAL WORK EMAIL'}</span>
-                    <a href={`mailto:${email}`} className="text-base font-bold text-[#151515] hover:text-[#F27D26] block mt-0.5 font-mono-tech">
-                      {email}
-                    </a>
-                    <span className="text-xs text-[#767670]">{lang === 'vi' ? 'Tiếp nhận bản vẽ thiết kế & đề bài dự toán' : 'Receiving CAD/BIM specifications'}</span>
-                  </div>
-                </div>
-
                 {/* Address */}
-                <div className="p-4 bg-[#EAE9E4] border border-[#D9D8D3] flex items-start gap-4">
-                  <div className="p-2.5 bg-[#151515] text-[#F27D26]">
+                <div className="flex items-start gap-4 p-5 bg-[#EAE9E4] border border-[#D9D8D3]">
+                  <div className="w-10 h-10 bg-[#151515] text-[#F27D26] flex items-center justify-center shrink-0">
                     <MapPin className="w-5 h-5" />
                   </div>
-                  <div>
-                    <span className="type-meta-label block">{lang === 'vi' ? 'ĐỊA CHỈ TRỤ SỞ' : 'REGISTERED OFFICE'}</span>
-                    <p className="text-xs text-[#262626] font-sans font-medium mt-0.5 leading-relaxed">
+                  <div className="space-y-1">
+                    <span className="type-meta-label block text-[#767670]">
+                      {lang === 'vi' ? 'ĐỊA CHỈ TRỤ SỞ:' : 'OFFICE ADDRESS:'}
+                    </span>
+                    <p className="text-sm font-semibold text-[#151515] leading-snug">
                       {address}
                     </p>
                   </div>
                 </div>
 
+                {/* Hotline & Phone */}
+                <div className="flex items-start gap-4 p-5 bg-[#EAE9E4] border border-[#D9D8D3]">
+                  <div className="w-10 h-10 bg-[#151515] text-[#F27D26] flex items-center justify-center shrink-0">
+                    <Phone className="w-5 h-5" />
+                  </div>
+                  <div className="space-y-1">
+                    <span className="type-meta-label block text-[#767670]">
+                      {lang === 'vi' ? 'HOTLINE KỸ THUẬT:' : 'DIRECT HOTLINE:'}
+                    </span>
+                    <a 
+                      href={`tel:${hotline.replace(/[^0-9+]/g, '')}`} 
+                      className="text-lg font-bold text-[#151515] hover:text-[#F27D26] transition-colors block font-mono-tech"
+                    >
+                      {hotline}
+                    </a>
+                    <span className="text-xs text-[#767670] block">
+                      {lang === 'vi' ? 'Hỗ trợ kỹ thuật 24/7 cho các dự án đang thi công' : '24/7 technical assistance for ongoing pours'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Direct Zalo Desk */}
+                <a
+                  href={zaloHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-start gap-4 p-5 bg-[#0068FF]/10 hover:bg-[#0068FF]/20 border border-[#0068FF]/30 transition-colors group cursor-pointer"
+                >
+                  <div className="w-10 h-10 bg-[#0068FF] text-white flex items-center justify-center shrink-0 p-1.5 rounded">
+                    <img 
+                      src="https://img.icons8.com/?size=100&id=0m71tmRjlxEe&format=png&color=000000" 
+                      alt="Zalo"
+                      className="w-full h-full object-contain filter invert"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="type-meta-label block text-[#0068FF] font-bold">
+                        CHAT ZALO KỸ THUẬT & BÁO GIÁ
+                      </span>
+                      <ArrowUpRight className="w-3.5 h-3.5 text-[#0068FF] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                    </div>
+                    <p className="text-sm font-semibold text-[#151515] leading-snug">
+                      {rawZalo}
+                    </p>
+                    <span className="text-xs text-[#555] block">
+                      Kết nối nhanh cùng Ban Điều Hành & Kỹ sư trưởng DEBRIQ
+                    </span>
+                  </div>
+                </a>
+
+                {/* Email */}
+                <div className="flex items-start gap-4 p-5 bg-[#EAE9E4] border border-[#D9D8D3]">
+                  <div className="w-10 h-10 bg-[#151515] text-[#F27D26] flex items-center justify-center shrink-0">
+                    <Mail className="w-5 h-5" />
+                  </div>
+                  <div className="space-y-1">
+                    <span className="type-meta-label block text-[#767670]">
+                      {lang === 'vi' ? 'EMAIL TIẾP NHẬN HỒ SƠ / BẢN VẼ:' : 'DRAWING INTAKE EMAIL:'}
+                    </span>
+                    <a 
+                      href={`mailto:${email}`} 
+                      className="text-sm font-semibold text-[#151515] hover:text-[#F27D26] transition-colors block font-mono-tech"
+                    >
+                      {email}
+                    </a>
+                  </div>
+                </div>
+
                 {/* Working Hours */}
-                <div className="p-4 bg-[#EAE9E4] border border-[#D9D8D3] flex items-start gap-4">
-                  <div className="p-2.5 bg-[#151515] text-[#F27D26]">
+                <div className="flex items-start gap-4 p-5 bg-[#EAE9E4] border border-[#D9D8D3]">
+                  <div className="w-10 h-10 bg-[#151515] text-[#F27D26] flex items-center justify-center shrink-0">
                     <Clock className="w-5 h-5" />
                   </div>
-                  <div>
-                    <span className="type-meta-label block">{lang === 'vi' ? 'THỜI GIAN LÀM VIỆC' : 'WORKING HOURS'}</span>
-                    <p className="text-xs text-[#262626] font-sans font-medium mt-0.5">
-                      Thứ Hai - Thứ Bảy: 08:00 - 18:00 (Trực hotline dự án 24/7)
+                  <div className="space-y-1">
+                    <span className="type-meta-label block text-[#767670]">
+                      {lang === 'vi' ? 'GIỜ LÀM VIỆC:' : 'WORKING HOURS:'}
+                    </span>
+                    <p className="text-xs text-[#555] leading-relaxed">
+                      {lang === 'vi'
+                        ? 'Thứ 2 – Thứ 7: 08:00 – 17:30 (Trực tuyến 24/7 theo tiến độ đổ bê tông công trường)'
+                        : 'Mon – Sat: 08:00 – 17:30 (On-call 24/7 for urgent concrete pour cycles)'}
                     </p>
                   </div>
                 </div>
@@ -172,149 +267,154 @@ export const ContactPage: React.FC<ContactPageProps> = () => {
 
             </div>
 
-            {/* Right: Interactive Message Form */}
-            <div className="lg:col-span-7 bg-[#EAE9E4] border border-[#D9D8D3] p-6 sm:p-10 shadow-sm">
+            {/* Right: Interactive Message & Consultation Form */}
+            <div className="lg:col-span-7 bg-[#EAE9E4] border border-[#D9D8D3] p-8 sm:p-10">
               
+              <div className="border-b border-[#D9D8D3] pb-6 mb-8">
+                <span className="type-section-label block mb-1">
+                  // {lang === 'vi' ? 'GỬI YÊU CẦU TRỰC TUYẾN' : 'ONLINE INQUIRY'}
+                </span>
+                <h3 className="font-display text-2xl font-bold text-[#151515]">
+                  {lang === 'vi' ? 'Để lại thông tin dự án' : 'Send us a Technical Message'}
+                </h3>
+              </div>
+
               {submitted ? (
-                <div className="py-12 text-center space-y-4 font-sans">
-                  <div className="w-16 h-16 bg-[#F27D26]/10 border border-[#F27D26] text-[#F27D26] mx-auto flex items-center justify-center">
-                    <CheckCircle className="w-8 h-8" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-[#151515] font-display">
-                    {lang === 'vi' ? 'Tin nhắn đã được gửi thành công' : 'Message Sent Successfully'}
-                  </h3>
-                  <p className="text-sm text-[#666] max-w-md mx-auto font-sans leading-relaxed">
+                <div className="bg-white border-2 border-emerald-600 p-8 text-center space-y-4">
+                  <CheckCircle className="w-12 h-12 text-emerald-600 mx-auto" />
+                  <h4 className="font-display font-bold text-xl text-[#151515]">
+                    {lang === 'vi' ? 'Tin nhắn đã được gửi thành công!' : 'Message Sent Successfully!'}
+                  </h4>
+                  <p className="text-sm text-[#555] max-w-md mx-auto font-sans leading-relaxed">
                     {lang === 'vi'
-                      ? 'Cảm ơn bạn đã liên hệ với DEBRIQ. Kỹ sư phụ trách sẽ phản hồi qua email hoặc số điện thoại trong thời gian sớm nhất.'
-                      : 'Thank you for contacting DEBRIQ. A lead engineer will respond promptly via email or phone.'}
+                      ? 'Cảm ơn bạn đã liên hệ. Đội ngũ kỹ sư DEBRIQ sẽ phản hồi lại bạn qua Email hoặc Số điện thoại trong thời gian sớm nhất.'
+                      : 'Thank you for reaching out. A DEBRIQ technical lead will respond promptly.'}
                   </p>
-                  <div className="pt-4">
-                    <button
-                      onClick={() => setSubmitted(false)}
-                      className="bg-[#151515] text-white px-6 py-2.5 font-semibold text-xs uppercase tracking-wider hover:bg-[#F27D26] transition-colors cursor-pointer"
-                    >
-                      {lang === 'vi' ? 'Gửi tin nhắn mới' : 'Send another message'}
-                    </button>
-                  </div>
+                  <button
+                    onClick={() => {
+                      setSubmitted(false);
+                      setFormData({
+                        fullName: '',
+                        company: '',
+                        phone: '',
+                        email: '',
+                        subject: 'Liên hệ hợp tác kỹ thuật',
+                        message: ''
+                      });
+                    }}
+                    className="bg-[#151515] text-white px-6 py-2.5 text-xs font-mono-tech uppercase tracking-wider font-bold cursor-pointer"
+                  >
+                    {lang === 'vi' ? 'Gửi tin nhắn khác' : 'Send Another Message'}
+                  </button>
                 </div>
               ) : (
-                <div>
-                  <div className="border-b border-[#D9D8D3] pb-4 mb-6">
-                    <span className="type-section-label block mb-1">
-                      // {lang === 'vi' ? 'HỘP THƯ TRỰC TUYẾN' : 'ONLINE INQUIRY'}
-                    </span>
-                    <h2 className="font-display text-2xl font-bold text-[#151515] tracking-tight">
-                      {lang === 'vi' ? 'Gửi tin nhắn / yêu cầu cho DEBRIQ' : 'Send an inquiry to DEBRIQ'}
-                    </h2>
-                  </div>
-
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  
                   {error && (
-                    <div className="mb-4 p-3 bg-red-100 border border-red-300 text-red-800 text-xs flex items-center gap-2 font-sans">
+                    <div className="p-4 bg-red-100 border border-red-400 text-red-700 text-xs flex items-center gap-2">
                       <AlertCircle className="w-4 h-4 shrink-0" />
                       <span>{error}</span>
                     </div>
                   )}
 
-                  <form onSubmit={handleSubmit} className="space-y-4 font-sans text-xs">
-                    
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-[#333] uppercase type-meta-label mb-1">
-                          {lang === 'vi' ? 'Họ và tên *' : 'Your Name *'}
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          value={formData.fullName}
-                          onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                          placeholder={lang === 'vi' ? 'Nguyễn Văn A' : 'John Doe'}
-                          className="w-full bg-white border border-[#D9D8D3] focus:border-[#F27D26] p-2.5 text-sm font-sans focus:outline-none"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-[#333] uppercase type-meta-label mb-1">
-                          {lang === 'vi' ? 'Công ty / Dự án' : 'Company / Project'}
-                        </label>
-                        <input
-                          type="text"
-                          value={formData.company}
-                          onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                          placeholder={lang === 'vi' ? 'Tổng thầu / Đơn vị thi công...' : 'Contractor / Company...'}
-                          className="w-full bg-white border border-[#D9D8D3] focus:border-[#F27D26] p-2.5 text-sm font-sans focus:outline-none"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-[#333] uppercase type-meta-label mb-1">
-                          {lang === 'vi' ? 'Số điện thoại / Zalo *' : 'Phone / Zalo *'}
-                        </label>
-                        <input
-                          type="tel"
-                          required
-                          value={formData.phone}
-                          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                          placeholder="0983..."
-                          className="w-full bg-white border border-[#D9D8D3] focus:border-[#F27D26] p-2.5 text-sm font-mono-tech focus:outline-none"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-[#333] uppercase type-meta-label mb-1">
-                          {lang === 'vi' ? 'Email *' : 'Email Address *'}
-                        </label>
-                        <input
-                          type="email"
-                          required
-                          value={formData.email}
-                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                          placeholder="name@domain.vn"
-                          className="w-full bg-white border border-[#D9D8D3] focus:border-[#F27D26] p-2.5 text-sm font-sans focus:outline-none"
-                        />
-                      </div>
-                    </div>
-
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div>
-                      <label className="block text-[#333] uppercase type-meta-label mb-1">
-                        {lang === 'vi' ? 'Tiêu đề / Mục đích liên hệ' : 'Subject'}
+                      <label className="type-meta-label block mb-1">
+                        {lang === 'vi' ? 'HỌ VÀ TÊN *' : 'YOUR NAME *'}
                       </label>
                       <input
                         type="text"
-                        value={formData.subject}
-                        onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                        className="w-full bg-white border border-[#D9D8D3] focus:border-[#F27D26] p-2.5 text-sm font-sans focus:outline-none"
+                        required
+                        value={formData.fullName}
+                        onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                        placeholder="Nguyễn Văn A"
+                        className="w-full bg-white border border-[#D9D8D3] p-3 text-sm focus:border-[#F27D26] outline-none font-sans"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-[#333] uppercase type-meta-label mb-1">
-                        {lang === 'vi' ? 'Nội dung tin nhắn *' : 'Message Content *'}
+                      <label className="type-meta-label block mb-1">
+                        {lang === 'vi' ? 'CÔNG TY / ĐƠN VỊ THI CÔNG' : 'COMPANY / CONTRACTOR'}
                       </label>
-                      <textarea
-                        rows={4}
-                        required
-                        value={formData.message}
-                        onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                        placeholder={lang === 'vi' ? 'Mô tả thông tin cần trao đổi, yêu cầu kỹ thuật hoặc đặt lịch hẹn...' : 'Describe your project or meeting request...'}
-                        className="w-full bg-white border border-[#D9D8D3] focus:border-[#F27D26] p-2.5 text-sm font-sans focus:outline-none leading-relaxed"
+                      <input
+                        type="text"
+                        value={formData.company}
+                        onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                        placeholder="Công ty CP Xây dựng..."
+                        className="w-full bg-white border border-[#D9D8D3] p-3 text-sm focus:border-[#F27D26] outline-none font-sans"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div>
+                      <label className="type-meta-label block mb-1">
+                        {lang === 'vi' ? 'SỐ ĐIỆN THOẠI *' : 'PHONE NUMBER *'}
+                      </label>
+                      <input
+                        type="tel"
+                        value={formData.phone}
+                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                        placeholder="0983..."
+                        className="w-full bg-white border border-[#D9D8D3] p-3 text-sm focus:border-[#F27D26] outline-none font-sans"
                       />
                     </div>
 
-                    <div className="pt-2">
-                      <button
-                        type="submit"
-                        disabled={submitting}
-                        className="w-full bg-[#151515] hover:bg-[#F27D26] text-white py-4 uppercase tracking-wider font-semibold inline-flex items-center justify-center gap-2 transition-colors disabled:opacity-50 cursor-pointer"
-                      >
-                        <Send className="w-4 h-4" />
-                        <span>{submitting ? (lang === 'vi' ? 'Đang gửi...' : 'Sending...') : (lang === 'vi' ? 'Gửi tin nhắn' : 'Send message')}</span>
-                      </button>
+                    <div>
+                      <label className="type-meta-label block mb-1">
+                        {lang === 'vi' ? 'ĐỊA CHỈ EMAIL' : 'EMAIL ADDRESS'}
+                      </label>
+                      <input
+                        type="email"
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        placeholder="name@company.com"
+                        className="w-full bg-white border border-[#D9D8D3] p-3 text-sm focus:border-[#F27D26] outline-none font-sans"
+                      />
                     </div>
+                  </div>
 
-                  </form>
-                </div>
+                  <div>
+                    <label className="type-meta-label block mb-1">
+                      {lang === 'vi' ? 'CHỦ ĐỀ YÊU CẦU' : 'SUBJECT'}
+                    </label>
+                    <select
+                      value={formData.subject}
+                      onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                      className="w-full bg-white border border-[#D9D8D3] p-3 text-sm focus:border-[#F27D26] outline-none font-sans"
+                    >
+                      <option value="Liên hệ hợp tác kỹ thuật">Liên hệ hợp tác kỹ thuật & Triển khai hồ sơ</option>
+                      <option value="Yêu cầu báo giá Shopdrawing kết cấu">Yêu cầu báo giá Shopdrawing kết cấu</option>
+                      <option value="Yêu cầu báo giá Shopdrawing hoàn thiện">Yêu cầu báo giá Shopdrawing hoàn thiện</option>
+                      <option value="Yêu cầu mô hình hóa BIM / Revit">Yêu cầu mô hình hóa BIM / Revit</option>
+                      <option value="Yêu cầu hồ sơ Biện pháp thi công">Yêu cầu hồ sơ Biện pháp thi công</option>
+                      <option value="Khác">Nội dung khác</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="type-meta-label block mb-1">
+                      {lang === 'vi' ? 'NỘI DUNG TRAO ĐỔI' : 'MESSAGE / PROJECT DETAILS'}
+                    </label>
+                    <textarea
+                      rows={4}
+                      value={formData.message}
+                      onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                      placeholder={lang === 'vi' ? 'Mô tả sơ bộ quy mô công trình, tiến độ và yêu cầu hồ sơ...' : 'Brief description of project scale, schedule, and drawing requirements...'}
+                      className="w-full bg-white border border-[#D9D8D3] p-3 text-sm focus:border-[#F27D26] outline-none font-sans leading-relaxed"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="w-full bg-[#F27D26] hover:bg-[#D86616] text-white p-4 font-display font-bold text-xs uppercase tracking-wider transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-md"
+                  >
+                    <Send className="w-4 h-4" />
+                    <span>{submitting ? (lang === 'vi' ? 'ĐANG GỬI...' : 'SENDING...') : (lang === 'vi' ? 'GỬI TIN NHẮN TỚI DEBRIQ' : 'SEND MESSAGE')}</span>
+                  </button>
+
+                </form>
               )}
 
             </div>
@@ -323,6 +423,34 @@ export const ContactPage: React.FC<ContactPageProps> = () => {
 
         </div>
       </section>
+
+      {/* Extra Image Gallery from Admin (if added) */}
+      {galleryImages.length > 0 && (
+        <section className="py-20 border-b border-[#D9D8D3] bg-[#F3F2EE]">
+          <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 space-y-8">
+            <div>
+              <span className="type-section-label block mb-1">
+                // {lang === 'vi' ? 'HÌNH ẢNH VĂN PHÒNG & KẾT NỐI' : 'OFFICE & DESK GALLERY'}
+              </span>
+              <h2 className="font-display text-3xl sm:text-4xl font-bold text-[#151515] tracking-tight">
+                {lang === 'vi' ? 'Văn phòng & Không gian làm việc' : 'Workspace & Collaboration'}
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+              {galleryImages.map((img, idx) => (
+                <div key={idx} className="border border-[#D9D8D3] bg-white p-2 shadow-sm rounded-lg overflow-hidden group">
+                  <img
+                    src={img}
+                    alt={`Gallery ${idx + 1}`}
+                    className="w-full aspect-video object-cover group-hover:scale-105 transition-transform duration-300 rounded"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
     </div>
   );

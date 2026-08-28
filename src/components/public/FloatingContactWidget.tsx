@@ -190,11 +190,11 @@ export const FloatingContactWidget: React.FC<FloatingContactWidgetProps> = ({ op
                 <X className="w-6 h-6 text-white transition-transform rotate-0 group-hover:rotate-90" />
               </div>
             ) : (
-              <div className="relative z-10 flex items-center justify-center w-full h-full p-2">
+              <div className="relative z-10 flex items-center justify-center w-full h-full p-2 [perspective:400px]">
                 <img
                   src={companyLogo}
                   alt="DEBRIQ Logo"
-                  className="w-full h-full object-contain animate-[spin_18s_linear_infinite] will-change-transform"
+                  className="w-full h-full object-contain animate-spin-horizontal"
                 />
               </div>
             )}
