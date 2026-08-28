@@ -61,6 +61,7 @@ export const ContactPage: React.FC<ContactPageProps> = () => {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const formContainerRef = useRef<HTMLDivElement>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,6 +89,9 @@ export const ContactPage: React.FC<ContactPageProps> = () => {
       }
 
       setSubmitted(true);
+      setTimeout(() => {
+        formContainerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 50);
     } catch (err: any) {
       setError(err.message || 'Lỗi khi gửi thông tin liên hệ. Vui lòng thử lại.');
     } finally {
@@ -268,7 +272,10 @@ export const ContactPage: React.FC<ContactPageProps> = () => {
             </div>
 
             {/* Right: Interactive Message & Consultation Form */}
-            <div className="lg:col-span-7 bg-[#EAE9E4] border border-[#D9D8D3] p-8 sm:p-10">
+            <div 
+              ref={formContainerRef}
+              className="lg:col-span-7 bg-[#EAE9E4] border border-[#D9D8D3] p-8 sm:p-10 scroll-mt-24"
+            >
               
               <div className="border-b border-[#D9D8D3] pb-6 mb-8">
                 <span className="type-section-label block mb-1">
