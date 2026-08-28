@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useData } from '../../context/DataContext';
 import { ArrowUpRight, Filter } from 'lucide-react';
+import { ScrollReveal } from '../../components/common/ScrollReveal';
 
 interface ProjectsPageProps {
   navigate: (path: string) => void;
@@ -86,124 +87,125 @@ export const ProjectsPage: React.FC<ProjectsPageProps> = ({ navigate, openQuoteM
             {filteredProjects.map((project, index) => {
               const isEven = index % 2 === 0;
               return (
-                <article
-                  key={project.id}
-                  className="bg-[#F3F2EE] border border-[#D9D8D3] hover:border-[#151515] transition-all p-6 sm:p-8 lg:p-10 shadow-sm"
-                >
-                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
-                    
-                    {/* Visual Media Column */}
-                    <div className={`lg:col-span-6 ${isEven ? 'lg:order-1' : 'lg:order-2'}`}>
-                      <div
-                        className="relative group overflow-hidden border border-[#D9D8D3] aspect-[16/10] bg-[#1E1E1E] cursor-pointer"
-                        onClick={() => navigate(`/projects/${project.slug}`)}
-                      >
-                        <img
-                          src={project.heroImage}
-                          alt={t(project.name)}
-                          className="w-full h-full object-cover grayscale contrast-125 group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700 ease-out"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-[#151515]/80 via-transparent to-transparent opacity-50 group-hover:opacity-30 transition-opacity" />
+                <ScrollReveal key={project.id} variant="fade-up" delay={index * 60}>
+                  <article
+                    className="bg-[#F3F2EE] border border-[#D9D8D3] hover:border-[#151515] transition-all p-6 sm:p-8 lg:p-10 shadow-sm"
+                  >
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+                      
+                      {/* Visual Media Column */}
+                      <div className={`lg:col-span-6 ${isEven ? 'lg:order-1' : 'lg:order-2'}`}>
+                        <div
+                          className="relative group overflow-hidden border border-[#D9D8D3] aspect-[16/10] bg-[#1E1E1E] cursor-pointer"
+                          onClick={() => navigate(`/projects/${project.slug}`)}
+                        >
+                          <img
+                            src={project.heroImage}
+                            alt={t(project.name)}
+                            className="w-full h-full object-cover grayscale contrast-125 group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700 ease-out"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-[#151515]/80 via-transparent to-transparent opacity-50 group-hover:opacity-30 transition-opacity" />
 
-                        {/* Badges Overlay */}
-                        <div className="absolute top-3 left-3 flex flex-wrap gap-1">
-                          {project.featured && (
-                            <span className="bg-[#F27D26] text-white font-mono-tech text-[10px] px-2 py-0.5 uppercase font-bold tracking-wider">
-                              FEATURED PROJECT
+                          {/* Badges Overlay */}
+                          <div className="absolute top-3 left-3 flex flex-wrap gap-1">
+                            {project.featured && (
+                              <span className="bg-[#F27D26] text-white font-mono-tech text-[10px] px-2 py-0.5 uppercase font-bold tracking-wider">
+                                FEATURED PROJECT
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="absolute bottom-3 left-3 right-3 flex justify-between items-end font-mono-tech text-[11px] text-white">
+                            <span className="bg-[#151515]/90 px-2.5 py-1 border border-[#444]">
+                              {project.directClient} // {project.period}
                             </span>
+                            <span className="bg-white text-[#151515] px-2.5 py-1 font-bold">
+                              {lang === 'vi' ? 'XEM CHI TIẾT' : 'DETAILS'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Metadata & Technical Facts Column */}
+                      <div className={`lg:col-span-6 space-y-6 ${isEven ? 'lg:order-2' : 'lg:order-1'}`}>
+                        
+                        {/* Top Header */}
+                        <div className="flex items-center justify-between border-b border-[#D9D8D3] pb-3">
+                          <span className="type-section-label font-medium">
+                            PRJ-0{index + 1} / {project.period}
+                          </span>
+                          <div className="flex flex-wrap gap-1.5 font-sans">
+                            {project.services.map((svc, i) => (
+                              <span key={i} className="text-[11px] bg-[#E2E1DC] text-[#262626] px-2.5 py-0.5 font-medium rounded-none">
+                                {svc}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Project Title */}
+                        <div>
+                          <h2 className="font-display text-2xl sm:text-3xl lg:text-4xl font-bold text-[#151515] tracking-tight leading-snug">
+                            {t(project.name)}
+                          </h2>
+                          {project.subtitle && (
+                            <p className="font-sans text-sm text-[#666] mt-1 italic">
+                              {t(project.subtitle)}
+                            </p>
                           )}
                         </div>
 
-                        <div className="absolute bottom-3 left-3 right-3 flex justify-between items-end font-mono-tech text-[11px] text-white">
-                          <span className="bg-[#151515]/90 px-2.5 py-1 border border-[#444]">
-                            {project.directClient} // {project.period}
-                          </span>
-                          <span className="bg-white text-[#151515] px-2.5 py-1 font-bold">
-                            {lang === 'vi' ? 'XEM CHI TIẾT' : 'DETAILS'}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Metadata & Technical Facts Column */}
-                    <div className={`lg:col-span-6 space-y-6 ${isEven ? 'lg:order-2' : 'lg:order-1'}`}>
-                      
-                      {/* Top Header */}
-                      <div className="flex items-center justify-between border-b border-[#D9D8D3] pb-3">
-                        <span className="type-section-label font-medium">
-                          PRJ-0{index + 1} / {project.period}
-                        </span>
-                        <div className="flex flex-wrap gap-1.5 font-sans">
-                          {project.services.map((svc, i) => (
-                            <span key={i} className="text-[11px] bg-[#E2E1DC] text-[#262626] px-2.5 py-0.5 font-medium rounded-none">
-                              {svc}
+                        {/* Client Matrix Table */}
+                        <div className="grid grid-cols-2 gap-4 bg-[#EAE9E4] p-4 border border-[#D9D8D3]">
+                          <div>
+                            <span className="type-meta-label block mb-1">
+                              {lang === 'vi' ? 'KHÁCH HÀNG TRỰC TIẾP' : 'DIRECT CLIENT'}
                             </span>
-                          ))}
+                            <span className="type-meta-value text-sm font-medium">{project.directClient}</span>
+                          </div>
+                          <div>
+                            <span className="type-meta-label block mb-1">
+                              {lang === 'vi' ? 'QUY MÔ THAM CHIẾU' : 'PROJECT SCALE'}
+                            </span>
+                            <span className="type-meta-value text-sm text-[#F27D26] font-medium">
+                              {project.scaleMetric || t(project.scale)}
+                            </span>
+                          </div>
                         </div>
-                      </div>
 
-                      {/* Project Title */}
-                      <div>
-                        <h2 className="font-display text-2xl sm:text-3xl lg:text-4xl font-bold text-[#151515] tracking-tight leading-snug">
-                          {t(project.name)}
-                        </h2>
-                        {project.subtitle && (
-                          <p className="font-sans text-sm text-[#666] mt-1 italic">
-                            {t(project.subtitle)}
+                        {/* DEBRIQ Contract Scope */}
+                        <div className="space-y-1.5">
+                          <span className="type-meta-label block">
+                            // {lang === 'vi' ? 'PHẠM VI CÔNG VIỆC THỰC HIỆN' : 'CONTRACTED DEBRIQ SCOPE'}
+                          </span>
+                          <p className="type-body-base text-sm sm:text-[15px] text-[#3D3D3A] leading-relaxed font-sans">
+                            {t(project.scope)}
                           </p>
-                        )}
-                      </div>
-
-                      {/* Client Matrix Table */}
-                      <div className="grid grid-cols-2 gap-4 bg-[#EAE9E4] p-4 border border-[#D9D8D3]">
-                        <div>
-                          <span className="type-meta-label block mb-1">
-                            {lang === 'vi' ? 'KHÁCH HÀNG TRỰC TIẾP' : 'DIRECT CLIENT'}
-                          </span>
-                          <span className="type-meta-value text-sm font-medium">{project.directClient}</span>
                         </div>
-                        <div>
-                          <span className="type-meta-label block mb-1">
-                            {lang === 'vi' ? 'QUY MÔ THAM CHIẾU' : 'PROJECT SCALE'}
-                          </span>
-                          <span className="type-meta-value text-sm text-[#F27D26] font-medium">
-                            {project.scaleMetric || t(project.scale)}
-                          </span>
+
+                        {/* Action Links */}
+                        <div className="pt-2 flex flex-wrap items-center gap-3">
+                          <button
+                            onClick={() => navigate(`/projects/${project.slug}`)}
+                            className="inline-flex items-center gap-2 bg-[#151515] hover:bg-[#F27D26] text-white px-5 py-3 font-sans text-xs tracking-wider uppercase font-semibold transition-colors cursor-pointer"
+                          >
+                            <span>{lang === 'vi' ? 'Xem hồ sơ case study' : 'View case study'}</span>
+                            <ArrowUpRight className="w-3.5 h-3.5" />
+                          </button>
+
+                          <button
+                            onClick={() => openQuoteModal(project.services[0], t(project.name))}
+                            className="inline-flex items-center gap-1.5 border border-[#D9D8D3] hover:border-[#151515] hover:bg-white text-[#262626] px-4 py-3 font-sans text-xs uppercase font-semibold transition-colors cursor-pointer"
+                          >
+                            <span>{lang === 'vi' ? 'Báo giá tương tự' : 'Similar quote'}</span>
+                          </button>
                         </div>
-                      </div>
 
-                      {/* DEBRIQ Contract Scope */}
-                      <div className="space-y-1.5">
-                        <span className="type-meta-label block">
-                          // {lang === 'vi' ? 'PHẠM VI CÔNG VIỆC THỰC HIỆN' : 'CONTRACTED DEBRIQ SCOPE'}
-                        </span>
-                        <p className="type-body-base text-sm sm:text-[15px] text-[#3D3D3A] leading-relaxed font-sans">
-                          {t(project.scope)}
-                        </p>
-                      </div>
-
-                      {/* Action Links */}
-                      <div className="pt-2 flex flex-wrap items-center gap-3">
-                        <button
-                          onClick={() => navigate(`/projects/${project.slug}`)}
-                          className="inline-flex items-center gap-2 bg-[#151515] hover:bg-[#F27D26] text-white px-5 py-3 font-sans text-xs tracking-wider uppercase font-semibold transition-colors cursor-pointer"
-                        >
-                          <span>{lang === 'vi' ? 'Xem hồ sơ case study' : 'View case study'}</span>
-                          <ArrowUpRight className="w-3.5 h-3.5" />
-                        </button>
-
-                        <button
-                          onClick={() => openQuoteModal(project.services[0], t(project.name))}
-                          className="inline-flex items-center gap-1.5 border border-[#D9D8D3] hover:border-[#151515] hover:bg-white text-[#262626] px-4 py-3 font-sans text-xs uppercase font-semibold transition-colors cursor-pointer"
-                        >
-                          <span>{lang === 'vi' ? 'Báo giá tương tự' : 'Similar quote'}</span>
-                        </button>
                       </div>
 
                     </div>
-
-                  </div>
-                </article>
+                  </article>
+                </ScrollReveal>
               );
             })}
           </div>
