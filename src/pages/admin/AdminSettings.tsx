@@ -605,10 +605,10 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ settings, refreshD
               </div>
               <div>
                 <h2 className="text-base font-bold text-[#F3F2EE]">
-                  Cài đặt Nút Liên Hệ Nhanh & Zalo Sếp (Góc Phải Màn Hình)
+                  Cài đặt Nút Liên Hệ
                 </h2>
                 <p className="text-xs text-[#888] mt-0.5">
-                  Hiển thị nút tròn nổi kèm icon Zalo ở góc phải màn hình, khách bấm vào sẽ mở trực tiếp Zalo của Sếp
+                  Hiển thị nút tròn nổi liên hệ nhanh ở góc phải màn hình, khách bấm vào sẽ mở trực tiếp Zalo / Hotline tư vấn
                 </p>
               </div>
             </div>
@@ -628,7 +628,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ settings, refreshD
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div>
                 <label className="block text-[#AAA] font-medium mb-1.5">
-                  LINK ZALO HOẶC SỐ ĐIỆN THOẠI ZALO CỦA SẾP *
+                  LINK ZALO *
                 </label>
                 <input
                   type="text"

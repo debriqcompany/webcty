@@ -469,161 +469,163 @@ export const HomePage: React.FC<HomePageProps> = ({ navigate, openQuoteModal }) 
       </section>
 
       {/* =========================================================================
-          4. 4 TECHNICAL SERVICES SECTION
+          4. TECHNICAL SERVICES SECTION (Dynamically synced with Admin CMS)
           ========================================================================= */}
       <section className="py-20 lg:py-24 border-b border-[#D9D8D3] bg-[#F3F2EE]">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
           
-          <ScrollReveal variant="fade-up" delay={0}>
-            <div className="border-b border-[#D9D8D3] pb-6 mb-12 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
-              <div>
-                <span className="type-section-label mb-1">
-                  03 / {lang === 'vi' ? 'DỊCH VỤ CHUYÊN MÔN' : 'CORE SERVICES'}
-                </span>
-                <h2 className="type-h2 text-3xl sm:text-4xl text-[#151515]">
-                  {lang === 'vi' ? '4 nhóm dịch vụ kỹ thuật' : '4 Core Technical Disciplines'}
-                </h2>
-              </div>
-              <p className="type-body-base text-base text-[#555] max-w-md font-sans">
-                {lang === 'vi'
-                  ? 'Quy trình kiểm soát chất lượng hồ sơ nghiêm ngặt, bám sát tiêu chuẩn xây dựng và điều kiện thi công tại công trường.'
-                  : 'Rigorous drawing QA/QC processes aligned with construction codes and jobsite execution constraints.'}
-              </p>
-            </div>
-          </ScrollReveal>
+          {(() => {
+            const activeServices = services && services.length > 0 
+              ? services.filter(s => s.published !== false)
+              : [];
+            const serviceCount = activeServices.length || 4;
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            
-            {/* Service 1: Structural */}
-            <ScrollReveal variant="fade-up" delay={50}>
-              <div className="bg-[#EAE9E4] border border-[#D9D8D3] p-8 space-y-6 flex flex-col justify-between hover:border-[#151515] transition-colors h-full">
-                <div className="space-y-4">
-                  <div className="flex justify-between items-start font-mono-tech text-xs">
-                    <span className="text-[#F27D26] font-medium">01 / STRUCTURAL</span>
-                    <span className="text-[#767670]">AutoCAD • KataPro • Revit</span>
+            return (
+              <>
+                <ScrollReveal variant="fade-up" delay={0}>
+                  <div className="border-b border-[#D9D8D3] pb-6 mb-12 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+                    <div>
+                      <span className="type-section-label mb-1">
+                        03 / {lang === 'vi' ? 'DỊCH VỤ CHUYÊN MÔN' : 'CORE SERVICES'}
+                      </span>
+                      <h2 className="type-h2 text-3xl sm:text-4xl text-[#151515]">
+                        {lang === 'vi' ? `${serviceCount} nhóm dịch vụ kỹ thuật` : `${serviceCount} Core Technical Disciplines`}
+                      </h2>
+                    </div>
+                    <p className="type-body-base text-base text-[#555] max-w-md font-sans">
+                      {lang === 'vi'
+                        ? 'Quy trình kiểm soát chất lượng hồ sơ nghiêm ngặt, bám sát tiêu chuẩn xây dựng và điều kiện thi công tại công trường.'
+                        : 'Rigorous drawing QA/QC processes aligned with construction codes and jobsite execution constraints.'}
+                    </p>
                   </div>
-                  <h3 className="type-h3 text-2xl text-[#151515] font-semibold">
-                    {lang === 'vi' ? 'Shopdrawing kết cấu' : 'Structural Shopdrawing'}
-                  </h3>
-                  <p className="type-body-base text-sm text-[#444] leading-relaxed font-sans">
-                    {lang === 'vi'
-                      ? 'Triển khai bản vẽ Shopdrawing kết cấu bê tông cốt thép phục vụ thi công dựa trên hồ sơ thiết kế được phê duyệt. Kinh nghiệm từ công trình cao tầng, khu đô thị đến hạ tầng hàng không.'
-                      : 'Comprehensive reinforced concrete shopdrawings for high-rise, townships, and airport infrastructure.'}
-                  </p>
-                  <ul className="space-y-1.5 text-xs text-[#555] border-t border-[#D9D8D3] pt-4 font-sans">
-                    <li>• Mặt bằng bố trí thép móng, dầm, cột, vách, sàn</li>
-                    <li>• Bảng thống kê thép & cắt uốn (BBS) tối ưu hao hụt</li>
-                    <li>• Chi tiết nút khung, dầm chuyển và mạch ngừng đổ bê tông</li>
-                  </ul>
+                </ScrollReveal>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {activeServices.length > 0 ? (
+                    activeServices.map((svc, idx) => {
+                      const titleStr = typeof svc.title === 'object'
+                        ? (lang === 'vi' ? svc.title.vi : (svc.title.en || svc.title.vi))
+                        : (svc.title || '');
+
+                      const descStr = typeof svc.description === 'object'
+                        ? (lang === 'vi' ? svc.description.vi : (svc.description.en || svc.description.vi))
+                        : (typeof svc.subtitle === 'object'
+                            ? (lang === 'vi' ? svc.subtitle.vi : svc.subtitle.en)
+                            : (svc.description || svc.subtitle || ''));
+
+                      const toolsList = (svc.tools || svc.toolsUsed || ['AutoCAD', 'Revit']).join(' • ');
+                      const primaryTag = ((svc.tools || svc.toolsUsed || [])[0] || 'ENGINEERING').toUpperCase();
+
+                      // Deliverables parsing
+                      let deliverableItems: string[] = [];
+                      if (Array.isArray(svc.deliverables)) {
+                        deliverableItems = svc.deliverables.map(d => typeof d === 'object' ? (lang === 'vi' ? d.vi : (d.en || d.vi)) : String(d));
+                      } else if (svc.deliverables && typeof svc.deliverables === 'object') {
+                        const delivObj = svc.deliverables as any;
+                        deliverableItems = delivObj[lang] || delivObj.vi || [];
+                      }
+
+                      if (deliverableItems.length === 0) {
+                        deliverableItems = [
+                          lang === 'vi' ? 'Hồ sơ bản vẽ chi tiết DWG / PDF' : 'Detailed DWG / PDF drawing sets',
+                          lang === 'vi' ? 'Bảng thống kê vật liệu bóc tách' : 'Material takeoff & schedule',
+                          lang === 'vi' ? 'Rà soát xung đột và lập RFI' : 'Clash review and technical RFI'
+                        ];
+                      }
+
+                      return (
+                        <ScrollReveal key={svc.id || idx} variant="fade-up" delay={50 * (idx + 1)}>
+                          <div className="bg-[#EAE9E4] border border-[#D9D8D3] p-8 space-y-6 flex flex-col justify-between hover:border-[#151515] transition-colors h-full">
+                            <div className="space-y-4">
+                              <div className="flex justify-between items-start font-mono-tech text-xs">
+                                <span className="text-[#F27D26] font-medium">0{idx + 1} / {primaryTag}</span>
+                                <span className="text-[#767670]">{toolsList}</span>
+                              </div>
+                              <h3 className="type-h3 text-2xl text-[#151515] font-semibold">
+                                {titleStr}
+                              </h3>
+                              {descStr && (
+                                <p className="type-body-base text-sm text-[#444] leading-relaxed font-sans line-clamp-3">
+                                  {descStr}
+                                </p>
+                              )}
+                              <ul className="space-y-1.5 text-xs text-[#555] border-t border-[#D9D8D3] pt-4 font-sans">
+                                {deliverableItems.slice(0, 3).map((item, dIdx) => (
+                                  <li key={dIdx}>• {item}</li>
+                                ))}
+                              </ul>
+                            </div>
+                            <button
+                              onClick={() => navigate(`/services#${svc.slug}`)}
+                              className="inline-flex items-center gap-2 text-[#F27D26] text-xs font-semibold uppercase hover:underline cursor-pointer font-sans pt-4"
+                            >
+                              <span>{lang === 'vi' ? `Xem chi tiết ${titleStr.toLowerCase()}` : `View ${titleStr.toLowerCase()}`}</span>
+                              <ArrowUpRight className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </ScrollReveal>
+                      );
+                    })
+                  ) : (
+                    /* Fallback standard services if empty */
+                    <>
+                      <ScrollReveal variant="fade-up" delay={50}>
+                        <div className="bg-[#EAE9E4] border border-[#D9D8D3] p-8 space-y-6 flex flex-col justify-between hover:border-[#151515] transition-colors h-full">
+                          <div className="space-y-4">
+                            <div className="flex justify-between items-start font-mono-tech text-xs">
+                              <span className="text-[#F27D26] font-medium">01 / STRUCTURAL</span>
+                              <span className="text-[#767670]">AutoCAD • KataPro • Revit</span>
+                            </div>
+                            <h3 className="type-h3 text-2xl text-[#151515] font-semibold">
+                              {lang === 'vi' ? 'Shopdrawing kết cấu' : 'Structural Shopdrawing'}
+                            </h3>
+                            <p className="type-body-base text-sm text-[#444] leading-relaxed font-sans">
+                              {lang === 'vi'
+                                ? 'Triển khai bản vẽ Shopdrawing kết cấu bê tông cốt thép phục vụ thi công dựa trên hồ sơ thiết kế được phê duyệt.'
+                                : 'Comprehensive reinforced concrete shopdrawings for high-rise, townships, and airport infrastructure.'}
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => navigate('/services')}
+                            className="inline-flex items-center gap-2 text-[#F27D26] text-xs font-semibold uppercase hover:underline cursor-pointer font-sans pt-4"
+                          >
+                            <span>{lang === 'vi' ? 'Xem quy trình kết cấu' : 'View structural workflow'}</span>
+                            <ArrowUpRight className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </ScrollReveal>
+
+                      <ScrollReveal variant="fade-up" delay={150}>
+                        <div className="bg-[#EAE9E4] border border-[#D9D8D3] p-8 space-y-6 flex flex-col justify-between hover:border-[#151515] transition-colors h-full">
+                          <div className="space-y-4">
+                            <div className="flex justify-between items-start font-mono-tech text-xs">
+                              <span className="text-[#F27D26] font-medium">02 / FINISHING</span>
+                              <span className="text-[#767670]">AutoCAD • Revit Arch</span>
+                            </div>
+                            <h3 className="type-h3 text-2xl text-[#151515] font-semibold">
+                              {lang === 'vi' ? 'Shopdrawing hoàn thiện' : 'Finishing Shopdrawing'}
+                            </h3>
+                            <p className="type-body-base text-sm text-[#444] leading-relaxed font-sans">
+                              {lang === 'vi'
+                                ? 'Triển khai Shopdrawing các hạng mục hoàn thiện kiến trúc: Xây, Tô, Cán nền, Ốp lát, Trần, Sơn.'
+                                : 'Detailed shopdrawings for masonry, plastering, floor screeds, tiling patterns, and ceiling frameworks.'}
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => navigate('/services')}
+                            className="inline-flex items-center gap-2 text-[#F27D26] text-xs font-semibold uppercase hover:underline cursor-pointer font-sans pt-4"
+                          >
+                            <span>{lang === 'vi' ? 'Xem quy trình hoàn thiện' : 'View finishing workflow'}</span>
+                            <ArrowUpRight className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </ScrollReveal>
+                    </>
+                  )}
                 </div>
-                <button
-                  onClick={() => navigate('/services')}
-                  className="inline-flex items-center gap-2 text-[#F27D26] text-xs font-semibold uppercase hover:underline cursor-pointer font-sans pt-4"
-                >
-                  <span>{lang === 'vi' ? 'Xem quy trình kết cấu' : 'View structural workflow'}</span>
-                  <ArrowUpRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </ScrollReveal>
-
-            {/* Service 2: Finishing */}
-            <ScrollReveal variant="fade-up" delay={150}>
-              <div className="bg-[#EAE9E4] border border-[#D9D8D3] p-8 space-y-6 flex flex-col justify-between hover:border-[#151515] transition-colors h-full">
-                <div className="space-y-4">
-                  <div className="flex justify-between items-start font-mono-tech text-xs">
-                    <span className="text-[#F27D26] font-medium">02 / FINISHING</span>
-                    <span className="text-[#767670]">AutoCAD • Revit Arch</span>
-                  </div>
-                  <h3 className="type-h3 text-2xl text-[#151515] font-semibold">
-                    {lang === 'vi' ? 'Shopdrawing hoàn thiện' : 'Finishing Shopdrawing'}
-                  </h3>
-                  <p className="type-body-base text-sm text-[#444] leading-relaxed font-sans">
-                    {lang === 'vi'
-                      ? 'Triển khai Shopdrawing các hạng mục hoàn thiện kiến trúc: Xây, Tô, Cán nền, Ốp lát, Trần, Sơn và các chi tiết tiếp giáp vật liệu liên quan.'
-                      : 'Detailed shopdrawings for masonry, plastering, floor screeds, tiling patterns, ceiling frameworks, and paint details.'}
-                  </p>
-                  <ul className="space-y-1.5 text-xs text-[#555] border-t border-[#D9D8D3] pt-4 font-sans">
-                    <li>• Định vị tường xây, bổ trụ, giằng tường, lanh-tô</li>
-                    <li>• Mặt bằng chia ron gạch, mốc ốp lát, dốc sàn thoát nước</li>
-                    <li>• Chi tiết giật cấp trần thạch cao & khe hắt đèn</li>
-                  </ul>
-                </div>
-                <button
-                  onClick={() => navigate('/services')}
-                  className="inline-flex items-center gap-2 text-[#F27D26] text-xs font-semibold uppercase hover:underline cursor-pointer font-sans pt-4"
-                >
-                  <span>{lang === 'vi' ? 'Xem quy trình hoàn thiện' : 'View finishing workflow'}</span>
-                  <ArrowUpRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </ScrollReveal>
-
-            {/* Service 3: BIM / Revit */}
-            <ScrollReveal variant="fade-up" delay={200}>
-              <div className="bg-[#EAE9E4] border border-[#D9D8D3] p-8 space-y-6 flex flex-col justify-between hover:border-[#151515] transition-colors h-full">
-                <div className="space-y-4">
-                  <div className="flex justify-between items-start font-mono-tech text-xs">
-                    <span className="text-[#F27D26] font-medium">03 / BIM & REVIT</span>
-                    <span className="text-[#767670]">Revit • Navisworks</span>
-                  </div>
-                  <h3 className="type-h3 text-2xl text-[#151515] font-semibold">
-                    {lang === 'vi' ? 'BIM / Revit' : 'BIM / Revit Services'}
-                  </h3>
-                  <p className="type-body-base text-sm text-[#444] leading-relaxed font-sans">
-                    {lang === 'vi'
-                      ? 'Dựng mô hình BIM từ hồ sơ thiết kế, phối hợp và kiểm tra xung đột không gian (Clash Detection), xuất bản vẽ thi công trực tiếp từ Revit.'
-                      : '3D BIM modeling from 2D designs, multi-trade spatial clash detection, and direct documentation generation.'}
-                  </p>
-                  <ul className="space-y-1.5 text-xs text-[#555] border-t border-[#D9D8D3] pt-4 font-sans">
-                    <li>• Dựng Model Kết cấu & Kiến trúc chuẩn LOD 350</li>
-                    <li>• Kiểm tra va chạm dầm - lỗ mở cơ điện (MEP)</li>
-                    <li>• Xuất bản vẽ và bóc tách khối lượng tham số tự động</li>
-                  </ul>
-                </div>
-                <button
-                  onClick={() => navigate('/services')}
-                  className="inline-flex items-center gap-2 text-[#F27D26] text-xs font-semibold uppercase hover:underline cursor-pointer font-sans pt-4"
-                >
-                  <span>{lang === 'vi' ? 'Xem năng lực BIM' : 'View BIM capability'}</span>
-                  <ArrowUpRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </ScrollReveal>
-
-            {/* Service 4: Construction Method */}
-            <ScrollReveal variant="fade-up" delay={250}>
-              <div className="bg-[#EAE9E4] border border-[#D9D8D3] p-8 space-y-6 flex flex-col justify-between hover:border-[#151515] transition-colors h-full">
-                <div className="space-y-4">
-                  <div className="flex justify-between items-start font-mono-tech text-xs">
-                    <span className="text-[#F27D26] font-medium">04 / METHOD & LOGISTICS</span>
-                    <span className="text-[#767670]">AutoCAD • Etabs • SAP</span>
-                  </div>
-                  <h3 className="type-h3 text-2xl text-[#151515] font-semibold">
-                    {lang === 'vi' ? 'Biện pháp thi công' : 'Construction Method'}
-                  </h3>
-                  <p className="type-body-base text-sm text-[#444] leading-relaxed font-sans">
-                    {lang === 'vi'
-                      ? 'Bản vẽ biện pháp thi công kết cấu, biện pháp tầng hầm (Top-down / Semi Top-down), mặt bằng tổng thể tổ chức thi công, cẩu tháp, trình tự thi công.'
-                      : 'Deep basement construction methods (Top-down, Semi Top-down), heavy falsework design, and site logistics layouts.'}
-                  </p>
-                  <ul className="space-y-1.5 text-xs text-[#555] border-t border-[#D9D8D3] pt-4 font-sans">
-                    <li>• Biện pháp tầng hầm sâu & hệ giằng chống kingpost</li>
-                    <li>• Mặt bằng định vị cẩu tháp, vận thăng, kho bãi</li>
-                    <li>• Sơ đồ phân đợt và trình tự đổ bê tông</li>
-                  </ul>
-                </div>
-                <button
-                  onClick={() => navigate('/services')}
-                  className="inline-flex items-center gap-2 text-[#F27D26] text-xs font-semibold uppercase hover:underline cursor-pointer font-sans pt-4"
-                >
-                  <span>{lang === 'vi' ? 'Xem biện pháp thi công' : 'View method statements'}</span>
-                  <ArrowUpRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </ScrollReveal>
-
-          </div>
-
+              </>
+            );
+          })()}
         </div>
       </section>
 
