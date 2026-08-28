@@ -37,6 +37,46 @@ app.use(cookieParser());
 app.disable('x-powered-by');
 app.set('trust proxy', 1);
 
+// HTTP Security Headers Middleware
+app.use((_req, res, next) => {
+  // HSTS (HTTP Strict Transport Security) - 1 year, includeSubDomains, preload
+  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+
+  // Prevent Clickjacking
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+
+  // Prevent MIME-type sniffing
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+
+  // Referrer Policy
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+
+  // Permissions Policy: Restrict sensitive unused browser APIs
+  res.setHeader(
+    'Permissions-Policy',
+    'camera=(), microphone=(), geolocation=(), payment=(), usb=(), display-capture=()'
+  );
+
+  // Content Security Policy (CSP)
+  // Configured to securely support Google Fonts, Cloudflare Insights, Firebase/Google APIs, dynamic uploads, and Vite assets
+  const cspDirectives = [
+    "default-src 'self'",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://static.cloudflareinsights.com https://*.googleapis.com https://*.google.com",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "font-src 'self' data: https://fonts.gstatic.com",
+    "img-src 'self' data: blob: https: http:",
+    "connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://static.cloudflareinsights.com https://cloudflareinsights.com https: wss: ws:",
+    "media-src 'self' data: blob: https:",
+    "object-src 'none'",
+    "frame-src 'self'",
+    "base-uri 'self'",
+    "form-action 'self'"
+  ];
+  res.setHeader('Content-Security-Policy', cspDirectives.join('; '));
+
+  next();
+});
+
 // Serve uploaded media files statically from the VPS filesystem
 app.use('/uploads', express.static(UPLOAD_DIR_PATH, {
   maxAge: IS_PRODUCTION ? '7d' : '0',
