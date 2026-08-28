@@ -617,10 +617,17 @@ async function startServer() {
     const distPath = path.join(process.cwd(), 'dist');
     const indexHtmlPath = path.join(distPath, 'index.html');
     
-    // Static assets (except index.html so we can inject dynamic meta tags)
+    // Static assets from Vite bundle
+    app.use('/assets', express.static(path.join(distPath, 'assets'), {
+      maxAge: '1y',
+      immutable: true
+    }));
+
+    // Static favicon, robots and root assets (excluding index.html)
     app.use(express.static(distPath, {
-      maxAge: '1d',
-      index: false
+      index: false,
+      fallthrough: true,
+      extensions: ['svg', 'png', 'jpg', 'ico', 'webp', 'json', 'txt', 'xml', 'css', 'js']
     }));
 
     // Helper to clean and sanitize meta text
@@ -749,6 +756,9 @@ async function startServer() {
 
         html = html.replace('</head>', `${dynamicMeta}\n  </head>`);
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
         res.send(html);
       } catch (err: any) {
         console.error('[OG Meta Injection Error]', err);
