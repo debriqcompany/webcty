@@ -653,8 +653,8 @@ async function startServer() {
         let html = fs.readFileSync(indexHtmlPath, 'utf-8');
         const settings = dbSettings.get() || ({} as any);
         const host = req.get('host') || 'debriq.vn';
-        const isLocal = host.includes('localhost') || host.includes('127.0.0.1');
-        const baseUrl = isLocal ? `http://${host}` : 'https://debriq.vn';
+        const isDevLocal = !IS_PRODUCTION && (host.includes('localhost') || host.includes('127.0.0.1'));
+        const baseUrl = isDevLocal ? `http://${host}` : 'https://debriq.vn';
         const urlPath = req.path || req.originalUrl || '/';
         const fullUrl = `${baseUrl}${urlPath}`;
 
