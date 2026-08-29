@@ -7,9 +7,7 @@ import {
   MapPin, 
   Send, 
   CheckCircle, 
-  AlertCircle, 
-  Clock,
-  ArrowUpRight
+  AlertCircle 
 } from 'lucide-react';
 import { getBilingualText, isValidImageUrl } from '../../utils/bilingual';
 
@@ -53,8 +51,6 @@ export const ContactPage: React.FC<ContactPageProps> = () => {
   const hotline = settings?.hotline || '0983 147 456';
   const email = settings?.email || 'contact@debriq.vn';
   const address = settings?.address || '71 Quốc Lộ 13, Tổ 2, Khu Phố Bàu Bàng, Xã Bàu Bàng, Thành phố Hồ Chí Minh';
-  const rawZalo = settings?.zaloUrl || settings?.zalo || '0983147456';
-  const zaloHref = rawZalo.startsWith('http') ? rawZalo : `https://zalo.me/${rawZalo.replace(/[^0-9]/g, '')}`;
 
   const [formData, setFormData] = useState({
     fullName: '',
@@ -209,36 +205,6 @@ export const ContactPage: React.FC<ContactPageProps> = () => {
                   </div>
                 </div>
 
-                {/* Direct Zalo Desk */}
-                <a
-                  href={zaloHref}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-start gap-4 p-5 bg-[#0068FF]/10 hover:bg-[#0068FF]/20 border border-[#0068FF]/30 transition-colors group cursor-pointer"
-                >
-                  <div className="w-10 h-10 bg-[#0068FF] text-white flex items-center justify-center shrink-0 p-1.5 rounded">
-                    <img 
-                      src="https://img.icons8.com/?size=100&id=0m71tmRjlxEe&format=png&color=000000" 
-                      alt="Zalo"
-                      className="w-full h-full object-contain filter invert"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="type-meta-label block text-[#0068FF] font-bold">
-                        CHAT ZALO KỸ THUẬT & BÁO GIÁ
-                      </span>
-                      <ArrowUpRight className="w-3.5 h-3.5 text-[#0068FF] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-                    </div>
-                    <p className="text-sm font-semibold text-[#151515] leading-snug">
-                      {rawZalo}
-                    </p>
-                    <span className="text-xs text-[#555] block">
-                      Kết nối nhanh cùng Ban Điều Hành & Kỹ sư trưởng DEBRIQ
-                    </span>
-                  </div>
-                </a>
-
                 {/* Email */}
                 <div className="flex items-start gap-4 p-5 bg-[#EAE9E4] border border-[#D9D8D3]">
                   <div className="w-10 h-10 bg-[#151515] text-[#F27D26] flex items-center justify-center shrink-0">
@@ -246,7 +212,7 @@ export const ContactPage: React.FC<ContactPageProps> = () => {
                   </div>
                   <div className="space-y-1">
                     <span className="type-meta-label block text-[#767670]">
-                      {lang === 'vi' ? 'EMAIL TIẾP NHẬN HỒ SƠ / BẢN VẼ:' : 'DRAWING INTAKE EMAIL:'}
+                      {lang === 'vi' ? 'EMAIL TIẾP NHẬN:' : 'INTAKE EMAIL:'}
                     </span>
                     <a 
                       href={`mailto:${email}`} 
@@ -254,23 +220,6 @@ export const ContactPage: React.FC<ContactPageProps> = () => {
                     >
                       {email}
                     </a>
-                  </div>
-                </div>
-
-                {/* Working Hours */}
-                <div className="flex items-start gap-4 p-5 bg-[#EAE9E4] border border-[#D9D8D3]">
-                  <div className="w-10 h-10 bg-[#151515] text-[#F27D26] flex items-center justify-center shrink-0">
-                    <Clock className="w-5 h-5" />
-                  </div>
-                  <div className="space-y-1">
-                    <span className="type-meta-label block text-[#767670]">
-                      {lang === 'vi' ? 'GIỜ LÀM VIỆC:' : 'WORKING HOURS:'}
-                    </span>
-                    <p className="text-xs text-[#555] leading-relaxed">
-                      {lang === 'vi'
-                        ? 'Thứ 2 – Thứ 7: 08:00 – 17:30 (Trực tuyến 24/7 theo tiến độ đổ bê tông công trường)'
-                        : 'Mon – Sat: 08:00 – 17:30 (On-call 24/7 for urgent concrete pour cycles)'}
-                    </p>
                   </div>
                 </div>
 
