@@ -2,6 +2,7 @@ import React from 'react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useData } from '../../context/DataContext';
 import { ShieldCheck, ArrowUpRight } from 'lucide-react';
+import { getBilingualText, isValidImageUrl } from '../../utils/bilingual';
 
 interface PartnersPageProps {
   navigate: (path: string) => void;
@@ -14,26 +15,32 @@ export const PartnersPage: React.FC<PartnersPageProps> = ({ openQuoteModal }) =>
 
   const page = pages?.['partners'];
 
-  const titleStr = typeof page?.title === 'object'
-    ? (lang === 'vi' ? page.title.vi : (page.title.en || page.title.vi))
-    : (page?.title || (lang === 'vi' ? 'Đối tác & Khách hàng' : 'Partners & Clients'));
+  const titleStr = getBilingualText(
+    page?.title,
+    lang,
+    'Đối tác & Khách hàng',
+    'Partners & Clients'
+  );
 
-  const subtitleStr = typeof page?.subtitle === 'object'
-    ? (lang === 'vi' ? page.subtitle.vi : (page.subtitle.en || page.subtitle.vi))
-    : (page?.subtitle || (lang === 'vi' ? 'HỆ THỐNG ĐỐI TÁC VÀ KHÁCH HÀNG' : 'CLIENTS & STRATEGIC PARTNERS'));
+  const subtitleStr = getBilingualText(
+    page?.subtitle,
+    lang,
+    'HỆ THỐNG ĐỐI TÁC VÀ KHÁCH HÀNG',
+    'CLIENTS & STRATEGIC PARTNERS'
+  );
 
-  const descStr = typeof page?.description === 'object'
-    ? (lang === 'vi' ? page.description.vi : (page.description.en || page.description.vi))
-    : (page?.description || (lang === 'vi'
-        ? 'Minh bạch và chuẩn xác trong mối quan hệ hợp tác. DEBRIQ tự hào đồng hành cùng các tổng thầu hàng đầu và các nhà thầu chuyên ngành trên các đại công trình.'
-        : 'Transparent attribution and proven reliability. DEBRIQ collaborates with tier-1 main contractors and specialized engineering firms across landmark builds.'));
+  const descStr = getBilingualText(
+    page?.description || page?.metaDescription,
+    lang,
+    'Minh bạch và chuẩn xác trong mối quan hệ hợp tác. DEBRIQ tự hào đồng hành cùng các tổng thầu hàng đầu và các nhà thầu chuyên ngành trên các đại công trình.',
+    'Transparent attribution and proven reliability. DEBRIQ collaborates with tier-1 main contractors and specialized engineering firms across landmark builds.'
+  );
 
-  const contentHtmlStr = typeof page?.contentHtml === 'object'
-    ? (lang === 'vi' ? page.contentHtml.vi : (page.contentHtml.en || page.contentHtml.vi))
-    : (page?.contentHtml || '');
+  const contentHtmlStr = getBilingualText(page?.contentHtml, lang, '', '');
 
-  const heroImage = page?.heroImage || page?.bannerImage;
-  const galleryImages = page?.gallery || [];
+  const rawHeroImage = page?.heroImage || page?.bannerImage;
+  const heroImage = isValidImageUrl(rawHeroImage) ? rawHeroImage : undefined;
+  const galleryImages = (page?.gallery || []).filter(isValidImageUrl);
 
   return (
     <div className="bg-[#F3F2EE] min-h-screen text-[#151515] font-display selection:bg-[#F27D26] selection:text-white">

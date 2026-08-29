@@ -574,27 +574,34 @@ export const dbPartners = {
    PAGES OPERATIONS
    ========================================================================= */
 export const dbPages = {
-  getAll: () => db.pages || {},
-  getByKey: (key: string) => db.pages?.[key] || null,
+  getAll: () => {
+    return {
+      ...initialPages,
+      ...(db.pages || {})
+    };
+  },
+  getByKey: (key: string) => {
+    const defaultPage = initialPages[key];
+    const userPage = db.pages?.[key];
+    if (!userPage && !defaultPage) return null;
+    return {
+      ...(defaultPage || {}),
+      ...(userPage || {})
+    };
+  },
   update: (key: string, data: Partial<PageContent>) => {
     if (!db.pages) db.pages = {};
-    if (!db.pages[key]) {
-      db.pages[key] = {
-        id: `page-${key}`,
-        key: key as any,
-        title: { vi: key, en: key },
-        metaDescription: { vi: '', en: '' },
-        sections: {},
-        updatedAt: new Date().toISOString(),
-        ...data
-      };
-    } else {
-      db.pages[key] = {
-        ...db.pages[key],
-        ...data,
-        updatedAt: new Date().toISOString()
-      };
-    }
+    const defaultPage = initialPages[key] || {};
+    const existing = db.pages[key] || defaultPage;
+    db.pages[key] = {
+      ...defaultPage,
+      ...existing,
+      ...data,
+      id: `page-${key}`,
+      key: key as any,
+      slug: key,
+      updatedAt: new Date().toISOString()
+    };
     saveDb();
     syncToFirestore('pages', key, db.pages[key]);
     return db.pages[key];

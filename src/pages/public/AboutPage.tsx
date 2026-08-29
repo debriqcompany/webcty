@@ -8,6 +8,7 @@ import {
   CheckCircle,
   FileText
 } from 'lucide-react';
+import { getBilingualText, isValidImageUrl } from '../../utils/bilingual';
 
 interface AboutPageProps {
   navigate: (path: string) => void;
@@ -20,26 +21,32 @@ export const AboutPage: React.FC<AboutPageProps> = () => {
 
   const page = pages?.['about'];
 
-  const titleStr = typeof page?.title === 'object'
-    ? (lang === 'vi' ? page.title.vi : (page.title.en || page.title.vi))
-    : (page?.title || (lang === 'vi' ? 'Về chúng tôi — DEBRIQ' : 'About DEBRIQ Engineering'));
+  const titleStr = getBilingualText(
+    page?.title,
+    lang,
+    'Về chúng tôi — DEBRIQ',
+    'About DEBRIQ Engineering'
+  );
 
-  const subtitleStr = typeof page?.subtitle === 'object'
-    ? (lang === 'vi' ? page.subtitle.vi : (page.subtitle.en || page.subtitle.vi))
-    : (page?.subtitle || (lang === 'vi' ? 'HỒ SƠ NĂNG LỰC DOANH NGHIỆP' : 'COMPANY PROFILE & BACKGROUND'));
+  const subtitleStr = getBilingualText(
+    page?.subtitle,
+    lang,
+    'HỒ SƠ NĂNG LỰC DOANH NGHIỆP',
+    'COMPANY PROFILE & BACKGROUND'
+  );
 
-  const descStr = typeof page?.description === 'object'
-    ? (lang === 'vi' ? page.description.vi : (page.description.en || page.description.vi))
-    : (page?.description || (lang === 'vi'
-        ? 'Đội ngũ kỹ sư chuyên sâu về Shopdrawing kết cấu, hoàn thiện, BIM/Revit và biện pháp thi công. Đồng hành cùng các nhà thầu và dự án lớn từ năm 2022.'
-        : 'Specialist engineering team dedicated to structural RC, finishing shopdrawings, BIM modeling, and constructability solutions since 2022.'));
+  const descStr = getBilingualText(
+    page?.description || page?.metaDescription,
+    lang,
+    'Đội ngũ kỹ sư chuyên sâu về Shopdrawing kết cấu, hoàn thiện, BIM/Revit và biện pháp thi công. Đồng hành cùng các nhà thầu và dự án lớn từ năm 2022.',
+    'Specialist engineering team dedicated to structural RC, finishing shopdrawings, BIM modeling, and constructability solutions since 2022.'
+  );
 
-  const contentHtmlStr = typeof page?.contentHtml === 'object'
-    ? (lang === 'vi' ? page.contentHtml.vi : (page.contentHtml.en || page.contentHtml.vi))
-    : (page?.contentHtml || '');
+  const contentHtmlStr = getBilingualText(page?.contentHtml, lang, '', '');
 
-  const heroImage = page?.heroImage || page?.bannerImage;
-  const galleryImages = page?.gallery || [];
+  const rawHeroImage = page?.heroImage || page?.bannerImage;
+  const heroImage = isValidImageUrl(rawHeroImage) ? rawHeroImage : undefined;
+  const galleryImages = (page?.gallery || []).filter(isValidImageUrl);
 
   return (
     <div className="bg-[#F3F2EE] min-h-screen text-[#151515] font-display selection:bg-[#F27D26] selection:text-white">

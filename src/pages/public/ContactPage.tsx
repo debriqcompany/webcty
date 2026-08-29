@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useData } from '../../context/DataContext';
 import { 
@@ -11,6 +11,7 @@ import {
   Clock,
   ArrowUpRight
 } from 'lucide-react';
+import { getBilingualText, isValidImageUrl } from '../../utils/bilingual';
 
 interface ContactPageProps {
   navigate: (path: string) => void;
@@ -22,26 +23,32 @@ export const ContactPage: React.FC<ContactPageProps> = () => {
 
   const page = pages?.['contact'];
 
-  const titleStr = typeof page?.title === 'object'
-    ? (lang === 'vi' ? page.title.vi : (page.title.en || page.title.vi))
-    : (page?.title || (lang === 'vi' ? 'Liên hệ DEBRIQ' : 'Contact DEBRIQ'));
+  const titleStr = getBilingualText(
+    page?.title,
+    lang,
+    'Liên hệ DEBRIQ',
+    'Contact DEBRIQ'
+  );
 
-  const subtitleStr = typeof page?.subtitle === 'object'
-    ? (lang === 'vi' ? page.subtitle.vi : (page.subtitle.en || page.subtitle.vi))
-    : (page?.subtitle || (lang === 'vi' ? 'KẾT NỐI VÀ HỢP TÁC KỸ THUẬT' : 'GET IN TOUCH & HEADQUARTERS'));
+  const subtitleStr = getBilingualText(
+    page?.subtitle,
+    lang,
+    'KẾT NỐI VÀ HỢP TÁC KỸ THUẬT',
+    'GET IN TOUCH & HEADQUARTERS'
+  );
 
-  const descStr = typeof page?.description === 'object'
-    ? (lang === 'vi' ? page.description.vi : (page.description.en || page.description.vi))
-    : (page?.description || (lang === 'vi'
-        ? 'Đội ngũ kỹ sư DEBRIQ luôn sẵn sàng lắng nghe yêu cầu và đề xuất giải pháp triển khai hồ sơ phù hợp nhất cho dự án của bạn.'
-        : 'DEBRIQ lead engineers are available to review project requirements and coordinate drawings delivery.'));
+  const descStr = getBilingualText(
+    page?.description || page?.metaDescription,
+    lang,
+    'Đội ngũ kỹ sư DEBRIQ luôn sẵn sàng lắng nghe yêu cầu và đề xuất giải pháp triển khai hồ sơ phù hợp nhất cho dự án của bạn.',
+    'DEBRIQ lead engineers are available to review project requirements and coordinate drawings delivery.'
+  );
 
-  const contentHtmlStr = typeof page?.contentHtml === 'object'
-    ? (lang === 'vi' ? page.contentHtml.vi : (page.contentHtml.en || page.contentHtml.vi))
-    : (page?.contentHtml || '');
+  const contentHtmlStr = getBilingualText(page?.contentHtml, lang, '', '');
 
-  const heroImage = page?.heroImage || page?.bannerImage;
-  const galleryImages = page?.gallery || [];
+  const rawHeroImage = page?.heroImage || page?.bannerImage;
+  const heroImage = isValidImageUrl(rawHeroImage) ? rawHeroImage : undefined;
+  const galleryImages = (page?.gallery || []).filter(isValidImageUrl);
 
   const hotline = settings?.hotline || '0983 147 456';
   const email = settings?.email || 'contact@debriq.vn';

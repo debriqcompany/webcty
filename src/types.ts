@@ -194,7 +194,18 @@ export interface PageContent {
   key?: string;
   slug?: string;
   title?: BilingualText;
+  subtitle?: string | BilingualText;
+  description?: string | BilingualText;
+  contentHtml?: string | BilingualText;
+  heroImage?: string;
+  bannerImage?: string;
+  gallery?: string[];
   metaDescription?: BilingualText;
+  ogTitle?: string;
+  ogDescription?: string;
+  ogImage?: string;
+  metaKeywords?: string;
+  canonicalSlug?: string;
   sections?: Record<string, PageSection>;
   contentBlocks?: ContentBlock[];
   seo?: SeoMetadata;

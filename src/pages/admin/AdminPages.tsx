@@ -1,5 +1,6 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import { PageContent } from '../../types';
+import { DEFAULT_PAGE_CONTENTS } from '../../data/defaultPages';
 import { 
   Save, 
   Upload, 
@@ -16,7 +17,9 @@ import {
   Users,
   Handshake,
   PhoneCall,
-  Home
+  Home,
+  RotateCcw,
+  Wrench
 } from 'lucide-react';
 
 interface AdminPagesProps {
@@ -40,6 +43,7 @@ export const AdminPages: React.FC<AdminPagesProps> = ({ pages, refreshData, toke
 
   const PAGE_TABS = [
     { key: 'about', labelVi: 'Về chúng tôi', labelEn: 'About Us', path: '/about', icon: Building },
+    { key: 'services', labelVi: 'Dịch vụ kỹ thuật', labelEn: 'Services Page', path: '/services', icon: Wrench },
     { key: 'partners', labelVi: 'Đối tác & Khách hàng', labelEn: 'Partners & Clients', path: '/partners', icon: Handshake },
     { key: 'join-debriq', labelVi: 'Mạng lưới kỹ sư', labelEn: 'Engineers Network', path: '/join-debriq', icon: Users },
     { key: 'contact', labelVi: 'Liên hệ & Hợp tác', labelEn: 'Contact Desk', path: '/contact', icon: PhoneCall },
@@ -47,9 +51,7 @@ export const AdminPages: React.FC<AdminPagesProps> = ({ pages, refreshData, toke
   ];
 
   const currentTab = PAGE_TABS.find(t => t.key === selectedPageKey) || PAGE_TABS[0];
-
-  // Current page object
-  const currentPage: PageContent = pageData[selectedPageKey] || {
+  const defaultPage = DEFAULT_PAGE_CONTENTS[selectedPageKey] || {
     id: `page-${selectedPageKey}`,
     slug: selectedPageKey,
     title: { vi: currentTab.labelVi, en: currentTab.labelEn },
@@ -63,6 +65,24 @@ export const AdminPages: React.FC<AdminPagesProps> = ({ pages, refreshData, toke
     sections: {}
   };
 
+  // Merge loaded database page with default template so no field is unexpectedly blank
+  const rawPage = pageData[selectedPageKey];
+  const currentPage: PageContent = useMemo(() => {
+    if (!rawPage) return defaultPage;
+    return {
+      ...defaultPage,
+      ...rawPage,
+      title: rawPage.title || defaultPage.title,
+      subtitle: rawPage.subtitle !== undefined && rawPage.subtitle !== '' ? rawPage.subtitle : defaultPage.subtitle,
+      description: rawPage.description !== undefined && rawPage.description !== '' ? rawPage.description : defaultPage.description,
+      contentHtml: rawPage.contentHtml !== undefined ? rawPage.contentHtml : defaultPage.contentHtml,
+      metaDescription: rawPage.metaDescription || defaultPage.metaDescription,
+      heroImage: rawPage.heroImage !== undefined ? rawPage.heroImage : defaultPage.heroImage,
+      bannerImage: rawPage.bannerImage !== undefined ? rawPage.bannerImage : defaultPage.bannerImage,
+      gallery: rawPage.gallery || defaultPage.gallery || []
+    };
+  }, [rawPage, defaultPage, selectedPageKey]);
+
   const updateCurrentPage = (partial: Partial<PageContent>) => {
     setPageData(prev => ({
       ...prev,
@@ -71,6 +91,17 @@ export const AdminPages: React.FC<AdminPagesProps> = ({ pages, refreshData, toke
         ...partial
       }
     }));
+  };
+
+  const handleResetDefaults = () => {
+    if (window.confirm(`Bạn có chắc muốn nạp lại nội dung mặc định chuẩn cho trang "${currentTab.labelVi}"?`)) {
+      setPageData(prev => ({
+        ...prev,
+        [selectedPageKey]: { ...defaultPage }
+      }));
+      setSuccessMsg(`Đã nạp lại nội dung chuẩn cho trang ${currentTab.labelVi}. Nhấn "LƯU TRANG" để lưu lên hệ thống.`);
+      setTimeout(() => setSuccessMsg(null), 4000);
+    }
   };
 
   const handleHeroUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -211,6 +242,16 @@ export const AdminPages: React.FC<AdminPagesProps> = ({ pages, refreshData, toke
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={handleResetDefaults}
+              className="px-3 py-1.5 bg-[#26262B] hover:bg-[#333] text-[#F27D26] border border-[#444] rounded-lg inline-flex items-center gap-1.5 text-xs transition-colors cursor-pointer"
+              title="Khôi phục nội dung văn bản chuẩn ban đầu"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Khôi phục mẫu chuẩn</span>
+            </button>
+
             <a
               href={currentTab.path}
               target="_blank"

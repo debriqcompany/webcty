@@ -9,6 +9,7 @@ import {
   Phone,
   Sparkles
 } from 'lucide-react';
+import { getBilingualText, isValidImageUrl } from '../../utils/bilingual';
 
 interface JoinDebriqPageProps {
   navigate: (path: string) => void;
@@ -21,26 +22,32 @@ export const JoinDebriqPage: React.FC<JoinDebriqPageProps> = () => {
 
   const page = pages?.['join-debriq'];
 
-  const titleStr = typeof page?.title === 'object'
-    ? (lang === 'vi' ? page.title.vi : (page.title.en || page.title.vi))
-    : (page?.title || (lang === 'vi' ? 'Gia nhập mạng lưới kỹ sư DEBRIQ' : 'Join the Engineer Network'));
+  const titleStr = getBilingualText(
+    page?.title,
+    lang,
+    'Gia nhập mạng lưới kỹ sư DEBRIQ',
+    'Join the Engineer Network'
+  );
 
-  const subtitleStr = typeof page?.subtitle === 'object'
-    ? (lang === 'vi' ? page.subtitle.vi : (page.subtitle.en || page.subtitle.vi))
-    : (page?.subtitle || (lang === 'vi' ? 'MẠNG LƯỚI KỸ SƯ CHUYÊN GIA' : 'TALENT NETWORK & COLLABORATORS'));
+  const subtitleStr = getBilingualText(
+    page?.subtitle,
+    lang,
+    'MẠNG LƯỚI KỸ SƯ CHUYÊN GIA',
+    'TALENT NETWORK & COLLABORATORS'
+  );
 
-  const descStr = typeof page?.description === 'object'
-    ? (lang === 'vi' ? page.description.vi : (page.description.en || page.description.vi))
-    : (page?.description || (lang === 'vi'
-        ? 'DEBRIQ luôn tìm kiếm các Kỹ sư Kết cấu, Hoàn thiện và Chuyên viên BIM tài năng để cùng triển khai các đại dự án sân bay, cao ốc và đô thị phức hợp.'
-        : 'Join our collaborative network of 25+ specialist engineers handling high-density structural and architectural drawing packages.'));
+  const descStr = getBilingualText(
+    page?.description || page?.metaDescription,
+    lang,
+    'DEBRIQ luôn tìm kiếm các Kỹ sư Kết cấu, Hoàn thiện và Chuyên viên BIM tài năng để cùng triển khai các đại dự án sân bay, cao ốc và đô thị phức hợp.',
+    'Join our collaborative network of 25+ specialist engineers handling high-density structural and architectural drawing packages.'
+  );
 
-  const contentHtmlStr = typeof page?.contentHtml === 'object'
-    ? (lang === 'vi' ? page.contentHtml.vi : (page.contentHtml.en || page.contentHtml.vi))
-    : (page?.contentHtml || '');
+  const contentHtmlStr = getBilingualText(page?.contentHtml, lang, '', '');
 
-  const heroImage = page?.heroImage || page?.bannerImage;
-  const galleryImages = page?.gallery || [];
+  const rawHeroImage = page?.heroImage || page?.bannerImage;
+  const heroImage = isValidImageUrl(rawHeroImage) ? rawHeroImage : undefined;
+  const galleryImages = (page?.gallery || []).filter(isValidImageUrl);
 
   const [formData, setFormData] = useState({
     fullName: '',

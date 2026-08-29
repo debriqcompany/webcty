@@ -11,6 +11,7 @@ import {
   TechnicalBimClashNode, 
   TechnicalBasementMethod 
 } from '../../utils/visuals';
+import { getBilingualText } from '../../utils/bilingual';
 
 interface ServicesPageProps {
   navigate: (path: string) => void;
@@ -22,15 +23,19 @@ export const ServicesPage: React.FC<ServicesPageProps> = ({ openQuoteModal }) =>
   const { services, pages } = useData();
 
   const pageContent = pages?.['services'];
-  const pageTitle = typeof pageContent?.title === 'object' 
-    ? (lang === 'vi' ? pageContent.title.vi : (pageContent.title.en || pageContent.title.vi))
-    : (pageContent?.title || (lang === 'vi' ? 'DỊCH VỤ KỸ THUẬT' : 'TECHNICAL SERVICES'));
+  const pageTitle = getBilingualText(
+    pageContent?.title,
+    lang,
+    'DỊCH VỤ KỸ THUẬT',
+    'TECHNICAL SERVICES'
+  );
     
-  const pageDesc = typeof pageContent?.metaDescription === 'object'
-    ? (lang === 'vi' ? pageContent.metaDescription.vi : pageContent.metaDescription.en)
-    : (lang === 'vi'
-        ? 'Giải pháp Shopdrawing kết cấu, hoàn thiện, mô hình thông tin công trình BIM/Revit và hồ sơ biện pháp thi công. Triển khai chuẩn xác theo tiến độ dự án.'
-        : 'Full-spectrum shopdrawing drafting, BIM modeling, and construction method engineering designed for high-density site execution.');
+  const pageDesc = getBilingualText(
+    pageContent?.description || pageContent?.metaDescription,
+    lang,
+    'Giải pháp Shopdrawing kết cấu, hoàn thiện, mô hình thông tin công trình BIM/Revit và hồ sơ biện pháp thi công. Triển khai chuẩn xác theo tiến độ dự án.',
+    'Full-spectrum shopdrawing drafting, BIM modeling, and construction method engineering designed for high-density site execution.'
+  );
 
   const workflowSteps = [
     {

@@ -1107,6 +1107,14 @@ export const initialPages: Record<string, PageContent> = {
       vi: 'Gia nhập mạng lưới kỹ sư DEBRIQ',
       en: 'Join The DEBRIQ Engineer Network'
     },
+    subtitle: {
+      vi: 'MẠNG LƯỚI KỸ SƯ CỘNG TÁC CHUYÊN MÔN',
+      en: 'SPECIALIST COLLABORATOR NETWORK'
+    },
+    description: {
+      vi: 'DEBRIQ xây dựng mạng lưới cộng tác viên kỹ thuật theo định hướng hợp tác lâu dài, tạo cơ hội để các kỹ sư tham gia những dự án thực tế có quy mô lớn, nâng cao kinh nghiệm triển khai hồ sơ và phát triển chuyên môn.',
+      en: 'DEBRIQ builds a technical collaborator network oriented toward long-term partnership, offering engineers opportunities to work on large-scale landmark projects.'
+    },
     metaDescription: {
       vi: 'Cơ hội hợp tác lâu dài cho kỹ sư Shopdrawing kết cấu, hoàn thiện và Revit / BIM.',
       en: 'Long-term partnership opportunities for Structural, Finishing, and Revit/BIM Engineers.'
@@ -1134,6 +1142,72 @@ export const initialPages: Record<string, PageContent> = {
         visible: true
       }
     },
+    updatedAt: '2026-02-26T00:00:00Z'
+  },
+  'contact': {
+    id: 'page-contact',
+    key: 'contact',
+    title: {
+      vi: 'Liên hệ DEBRIQ',
+      en: 'Contact DEBRIQ Engineering'
+    },
+    subtitle: {
+      vi: 'KẾT NỐI VÀ HỢP TÁC KỸ THUẬT',
+      en: 'GET IN TOUCH & HEADQUARTERS'
+    },
+    description: {
+      vi: 'Đội ngũ kỹ sư DEBRIQ luôn sẵn sàng lắng nghe yêu cầu và đề xuất giải pháp triển khai hồ sơ phù hợp nhất cho dự án của bạn.',
+      en: 'DEBRIQ lead engineers are available to review project requirements and coordinate drawings delivery.'
+    },
+    metaDescription: {
+      vi: 'Liên hệ trực tiếp với Ban Điều Hành và đội ngũ Kỹ sư trưởng DEBRIQ để được tư vấn hồ sơ và báo giá nhanh.',
+      en: 'Contact DEBRIQ engineering leads directly for project blueprints consultation and fast quotation.'
+    },
+    sections: {},
+    updatedAt: '2026-02-26T00:00:00Z'
+  },
+  'partners': {
+    id: 'page-partners',
+    key: 'partners',
+    title: {
+      vi: 'Đối tác & Khách hàng',
+      en: 'Partners & Clients'
+    },
+    subtitle: {
+      vi: 'HỆ THỐNG ĐỐI TÁC VÀ KHÁCH HÀNG',
+      en: 'CLIENTS & STRATEGIC PARTNERS'
+    },
+    description: {
+      vi: 'Minh bạch và chuẩn xác trong mối quan hệ hợp tác. DEBRIQ tự hào đồng hành cùng các tổng thầu hàng đầu và các nhà thầu chuyên ngành trên các đại công trình.',
+      en: 'Transparent attribution and proven reliability. DEBRIQ collaborates with tier-1 main contractors and specialized engineering firms across landmark builds.'
+    },
+    metaDescription: {
+      vi: 'Đối tác và khách hàng của DEBRIQ: Coteccons, Hancorp, Tân Minh Nhân và các tổng thầu uy tín.',
+      en: 'DEBRIQ partners and clients: Coteccons, Hancorp, Tan Minh Nhan, and leading general contractors.'
+    },
+    sections: {},
+    updatedAt: '2026-02-26T00:00:00Z'
+  },
+  'services': {
+    id: 'page-services',
+    key: 'services',
+    title: {
+      vi: 'Dịch vụ Kỹ thuật',
+      en: 'Technical Services'
+    },
+    subtitle: {
+      vi: 'NĂNG LỰC DỊCH VỤ CHUYÊN MÔN',
+      en: 'SPECIALIZED ENGINEERING CAPABILITIES'
+    },
+    description: {
+      vi: 'Giải pháp Shopdrawing kết cấu, hoàn thiện, mô hình thông tin công trình BIM/Revit và hồ sơ biện pháp thi công. Triển khai chuẩn xác theo tiến độ dự án.',
+      en: 'Full-spectrum shopdrawing drafting, BIM modeling, and construction method engineering designed for high-density site execution.'
+    },
+    metaDescription: {
+      vi: 'Giải pháp Shopdrawing kết cấu, hoàn thiện, BIM/Revit và hồ sơ biện pháp thi công cho các công trình quy mô lớn.',
+      en: 'Structural and finishing shopdrawing, BIM/Revit coordination, and method statement packages.'
+    },
+    sections: {},
     updatedAt: '2026-02-26T00:00:00Z'
   }
 };
